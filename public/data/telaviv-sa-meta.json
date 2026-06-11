@@ -1,0 +1,12 @@
+{
+  "city": "תל אביב-יפו",
+  "semel": 5000,
+  "statisticalAreas": 184,
+  "areasWithVotes": 94,
+  "uniqueAddresses": 121,
+  "geocoded": 121,
+  "geocodeRate": 1,
+  "ballotsPlaced": 667,
+  "ballotsUnplaced": 2,
+  "note": "הדגמת רזולוציית שכונה (אזורים סטטיסטיים) — geocoding דרך Nominatim/OSM, אומדן מבוסס כתובות קלפי. שכבת פרימיום בהמתנה לאישור רישוי מסחרי לקובץ הכתובות."
+}

@@ -11,6 +11,15 @@ async function getJson<T>(name: string): Promise<T> {
 
 export type PointLookup = Record<string, [number, number]>;
 
+export interface CityDrillMeta {
+  city: string;
+  semel: number;
+  statisticalAreas: number;
+  areasWithVotes: number;
+  geocodeRate: number;
+  note: string;
+}
+
 export interface AppData {
   parties: Parties;
   settlements: Settlements;
@@ -18,6 +27,8 @@ export interface AppData {
   resultsMeta: ResultsMeta;
   geoMeta: GeoMeta;
   sankey: SankeyData;
+  /** Optional Tel Aviv neighborhood drill-down (present only if the demo data was built). */
+  cityDrill: CityDrillMeta | null;
 }
 
 /** Load everything the app needs up front (all files are small + static). */
@@ -30,8 +41,11 @@ export async function loadAppData(): Promise<AppData> {
     getJson<GeoMeta>("geo-meta.json"),
     getJson<SankeyData>("sankey-25-24.json"),
   ]);
-  return { parties, settlements, points, resultsMeta, geoMeta, sankey };
+  const cityDrill = await getJson<CityDrillMeta>("telaviv-sa-meta.json").catch(() => null);
+  return { parties, settlements, points, resultsMeta, geoMeta, sankey, cityDrill };
 }
+
+export const TELAVIV_SA_URL = url("telaviv-sa.geojson");
 
 export const GEOJSON_SETTLEMENTS = url("k25-settlements.geojson");
 export const GEOJSON_POINTS = url("k25-settlements-points.geojson");

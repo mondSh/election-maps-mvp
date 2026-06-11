@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { loadAppData, type AppData } from "./data";
+import { loadAppData, TELAVIV_SA_URL, type AppData } from "./data";
 import type { ColorMode } from "./types";
 import MapView from "./components/MapView";
 import SummaryBar from "./components/SummaryBar";
@@ -17,9 +17,13 @@ export default function App() {
   const [colorMode, setColorMode] = useState<ColorMode>({ kind: "winner" });
   const [selected, setSelected] = useState<string | null>(null);
   const [showMethod, setShowMethod] = useState(false);
+  const [drillCity, setDrillCity] = useState<string | null>(null);
 
   useEffect(() => {
     loadAppData().then(setData).catch((e) => setError(String(e)));
+    // Shareable deep-link to the city drill-down, e.g. ?drill=5000
+    const drill = new URLSearchParams(window.location.search).get("drill");
+    if (drill) setDrillCity(drill);
   }, []);
 
   if (error) return <div className="loading">שגיאה בטעינת הנתונים: {error}</div>;
@@ -27,6 +31,7 @@ export default function App() {
 
   const k25 = data.resultsMeta.knessets["25"];
   const selectedSettlement = selected ? data.settlements[selected] : null;
+  const drillSemel = data.cityDrill ? String(data.cityDrill.semel) : null;
 
   return (
     <div className="app">
@@ -37,7 +42,7 @@ export default function App() {
         </div>
         <nav className="tabs" role="tablist">
           <button role="tab" aria-selected={tab === "map"} className={tab === "map" ? "tab active" : "tab"} onClick={() => setTab("map")}>מפת תוצאות</button>
-          <button role="tab" aria-selected={tab === "sankey"} className={tab === "sankey" ? "tab active" : "tab"} onClick={() => setTab("sankey")}>קולות נודדים</button>
+          <button role="tab" aria-selected={tab === "sankey"} className={tab === "sankey" ? "tab active" : "tab"} onClick={() => { setDrillCity(null); setTab("sankey"); }}>קולות נודדים</button>
         </nav>
       </header>
 
@@ -52,10 +57,26 @@ export default function App() {
             colorMode={colorMode}
             selected={selected}
             onSelect={setSelected}
+            drillUrl={drillCity ? TELAVIV_SA_URL : null}
           />
           <ControlPanel parties={data.parties} national={k25.national} colorMode={colorMode} onChange={setColorMode} />
-          {selectedSettlement && (
-            <InfoPanel settlement={selectedSettlement} parties={data.parties} onClose={() => setSelected(null)} />
+          {drillCity && data.cityDrill && (
+            <div className="drill-banner">
+              <div>
+                <b>{data.cityDrill.city} · רזולוציית שכונה</b>
+                <span className="drill-banner-sub">אזורים סטטיסטיים (הלמ"ס) · אומדן מבוסס כתובות קלפי · שכבת פרימיום בהמתנה לאישור רישוי</span>
+              </div>
+              <button className="drill-back" onClick={() => setDrillCity(null)}>→ חזרה למפה הארצית</button>
+            </div>
+          )}
+          {!drillCity && selectedSettlement && (
+            <InfoPanel
+              settlement={selectedSettlement}
+              parties={data.parties}
+              onClose={() => setSelected(null)}
+              drillAvailable={selected === drillSemel}
+              onDrill={() => { setDrillCity(selected); setSelected(null); }}
+            />
           )}
           <button className="method-toggle" onClick={() => setShowMethod((v) => !v)}>
             {showMethod ? "סגור" : "איך זה עובד?"}

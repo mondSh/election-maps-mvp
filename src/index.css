@@ -157,7 +157,9 @@ body { font-family: var(--font); color: var(--ink); background: var(--bg); -webk
   .brand h1 { font-size: 17px; }
   .summary { padding: 9px 14px; }
   .summary-chips { gap: 4px 10px; }
-  .control-panel { top: 8px; right: 8px; left: 8px; width: auto; padding: 11px; }
+  /* Compact selector only — the top summary bar already serves as the party legend. */
+  .control-panel { top: 8px; right: 8px; left: 8px; width: auto; padding: 10px; }
+  .control-panel .legend { display: none; }
   .info-panel {
     top: auto; bottom: 0; left: 0; right: 0; width: auto; max-height: 52vh;
     border-radius: 16px 16px 0 0;

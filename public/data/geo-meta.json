@@ -1,0 +1,55 @@
+{
+  "source": "ISRAEL_CBS_GIS / SOEC_SetlBord_2021_Dissolve (official CBS settlement boundaries) + Setl_Point (settlement points)",
+  "retrieved": "2026-06-12",
+  "settlementPolygons": 1207,
+  "settlementsInResults": 1216,
+  "settlementsMappedPolygon": 1060,
+  "settlementsMappedBubble": 124,
+  "coverageByValidVotes_polygon": 0.8572,
+  "coverageByValidVotes_rendered": 0.8992,
+  "unmappableSettlements": 32,
+  "unmappableValidVotes": 480238,
+  "unmappableNote": "Mostly מעטפות חיצוניות (external/double-envelope votes: soldiers, prisoners, hospitals, embassies) — no geographic location by definition.",
+  "topUnmappable": [
+    {
+      "semel": 9999,
+      "name": "מעטפות חיצוניות",
+      "valid": 458714
+    },
+    {
+      "semel": 3826,
+      "name": "שער שומרון",
+      "valid": 4162
+    },
+    {
+      "semel": 939,
+      "name": "מסעודין אלעזאזמה",
+      "valid": 3929
+    },
+    {
+      "semel": 961,
+      "name": "אבו רוקייק שבט",
+      "valid": 2093
+    },
+    {
+      "semel": 963,
+      "name": "אעצם שבט",
+      "valid": 2089
+    },
+    {
+      "semel": 3823,
+      "name": "גני מודיעין",
+      "valid": 1532
+    },
+    {
+      "semel": 966,
+      "name": "אבו רובייעה שבט",
+      "valid": 1473
+    },
+    {
+      "semel": 968,
+      "name": "אבו קורינאת שבט",
+      "valid": 1209
+    }
+  ]
+}

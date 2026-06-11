@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "election-maps",
+  "compatibility_date": "2026-06-11",
+  // Assets-only SPA: no Worker `main` entry. The @cloudflare/vite-plugin wires
+  // the Vite build output (dist/) as the asset directory automatically.
+  "assets": {
+    "not_found_handling": "single-page-application"
+  }
+}

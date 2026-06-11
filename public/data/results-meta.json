@@ -1,0 +1,184 @@
+{
+  "knessets": {
+    "24": {
+      "settlements": 1215,
+      "totalValid": 4410052,
+      "national": [
+        {
+          "family": "likud",
+          "label": "הליכוד",
+          "votes": 1066892,
+          "share": 0.2419
+        },
+        {
+          "family": "yesh_atid",
+          "label": "יש עתיד",
+          "votes": 614112,
+          "share": 0.1393
+        },
+        {
+          "family": "shas",
+          "label": "ש\"ס",
+          "votes": 316008,
+          "share": 0.0717
+        },
+        {
+          "family": "gantz",
+          "label": "המחנה הממלכתי",
+          "votes": 292257,
+          "share": 0.0663
+        },
+        {
+          "family": "yamina",
+          "label": "ימינה",
+          "votes": 273836,
+          "share": 0.0621
+        },
+        {
+          "family": "labor",
+          "label": "העבודה",
+          "votes": 268767,
+          "share": 0.0609
+        },
+        {
+          "family": "utj",
+          "label": "יהדות התורה",
+          "votes": 248391,
+          "share": 0.0563
+        },
+        {
+          "family": "yb",
+          "label": "ישראל ביתנו",
+          "votes": 248370,
+          "share": 0.0563
+        },
+        {
+          "family": "rz",
+          "label": "הציונות הדתית",
+          "votes": 225641,
+          "share": 0.0512
+        },
+        {
+          "family": "joint",
+          "label": "הרשימה המשותפת",
+          "votes": 212583,
+          "share": 0.0482
+        },
+        {
+          "family": "newhope",
+          "label": "תקווה חדשה",
+          "votes": 209161,
+          "share": 0.0474
+        },
+        {
+          "family": "meretz",
+          "label": "מרצ",
+          "votes": 202218,
+          "share": 0.0459
+        },
+        {
+          "family": "raam",
+          "label": "רע\"ם",
+          "votes": 167064,
+          "share": 0.0379
+        },
+        {
+          "family": "other",
+          "label": "אחר",
+          "votes": 64752,
+          "share": 0.0147
+        }
+      ]
+    },
+    "25": {
+      "settlements": 1216,
+      "totalValid": 4764742,
+      "national": [
+        {
+          "family": "likud",
+          "label": "הליכוד",
+          "votes": 1115336,
+          "share": 0.2341
+        },
+        {
+          "family": "yesh_atid",
+          "label": "יש עתיד",
+          "votes": 847435,
+          "share": 0.1779
+        },
+        {
+          "family": "rz",
+          "label": "הציונות הדתית",
+          "votes": 516470,
+          "share": 0.1084
+        },
+        {
+          "family": "gantz",
+          "label": "המחנה הממלכתי",
+          "votes": 432482,
+          "share": 0.0908
+        },
+        {
+          "family": "shas",
+          "label": "ש\"ס",
+          "votes": 392964,
+          "share": 0.0825
+        },
+        {
+          "family": "utj",
+          "label": "יהדות התורה",
+          "votes": 280194,
+          "share": 0.0588
+        },
+        {
+          "family": "yb",
+          "label": "ישראל ביתנו",
+          "votes": 213687,
+          "share": 0.0448
+        },
+        {
+          "family": "raam",
+          "label": "רע\"ם",
+          "votes": 194047,
+          "share": 0.0407
+        },
+        {
+          "family": "hadash",
+          "label": "חד\"ש־תע\"ל",
+          "votes": 178735,
+          "share": 0.0375
+        },
+        {
+          "family": "labor",
+          "label": "העבודה",
+          "votes": 175992,
+          "share": 0.0369
+        },
+        {
+          "family": "meretz",
+          "label": "מרצ",
+          "votes": 150793,
+          "share": 0.0316
+        },
+        {
+          "family": "balad",
+          "label": "בל\"ד",
+          "votes": 138617,
+          "share": 0.0291
+        },
+        {
+          "family": "other",
+          "label": "אחר",
+          "votes": 71215,
+          "share": 0.0149
+        },
+        {
+          "family": "habait",
+          "label": "הבית היהודי",
+          "votes": 56775,
+          "share": 0.0119
+        }
+      ]
+    }
+  }
+}

@@ -111,6 +111,14 @@ async function main() {
   }
   writeFileSync(join(OUT, "k25-settlements-points.geojson"), JSON.stringify({ type: "FeatureCollection", features: pointFeatures }));
 
+  // Full semel → [lon,lat] lookup (official CBS settlement points) for label anchors.
+  const centroidLookup = {};
+  for (const semel of Object.keys(results)) {
+    const c = pointByCode.get(semel);
+    if (c) centroidLookup[semel] = c.map((n) => +n.toFixed(5));
+  }
+  writeFileSync(join(OUT, "settlement-points.json"), JSON.stringify(centroidLookup));
+
   const totalSettlements = Object.keys(results).length;
   const unmapped = Object.entries(results).filter(([s]) => !mappedSemels.has(s) && !pointByCode.has(s));
   const unmappedValid = unmapped.reduce((a, [, r]) => a + r.valid, 0);

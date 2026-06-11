@@ -1,0 +1,68 @@
+export type FamilyKey = string;
+
+export interface Party {
+  label: string;
+  color: string;
+}
+export type Parties = Record<FamilyKey, Party>;
+
+export interface Settlement {
+  name: string;
+  eligible: number;
+  voters: number;
+  valid: number;
+  invalid: number;
+  turnout: number;
+  winner: FamilyKey | null;
+  winnerVotes: number;
+  winnerShare: number;
+  parties: Record<FamilyKey, number>;
+}
+export type Settlements = Record<string, Settlement>;
+
+export interface NationalEntry {
+  family: string;
+  label: string;
+  votes: number;
+  share: number;
+}
+export interface ResultsMeta {
+  knessets: Record<string, { settlements: number; totalValid: number; national: NationalEntry[] }>;
+}
+
+export interface GeoMeta {
+  source: string;
+  retrieved: string;
+  settlementPolygons: number;
+  settlementsInResults: number;
+  settlementsMappedPolygon: number;
+  settlementsMappedBubble: number;
+  coverageByValidVotes_polygon: number;
+  coverageByValidVotes_rendered: number;
+  unmappableSettlements: number;
+  unmappableValidVotes: number;
+  unmappableNote: string;
+}
+
+export interface SankeyNode {
+  id: string;
+  label: string;
+  color: string;
+}
+export interface SankeyLink {
+  source: string;
+  target: string;
+  value: number;
+}
+export interface SankeyData {
+  method: string;
+  fromKnesset: number;
+  toKnesset: number;
+  minLinkShown: number;
+  totalFlow: number;
+  nodes: SankeyNode[];
+  links: SankeyLink[];
+}
+
+/** Coloring mode for the choropleth: the winning party, or one party's vote-share. */
+export type ColorMode = { kind: "winner" } | { kind: "party"; family: FamilyKey };

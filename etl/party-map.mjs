@@ -31,6 +31,23 @@ export const FAMILIES = {
   other:      { label: "אחר",               color: "#c9ccd1" },
 };
 
+// Official Knesset-25 seat allocation (CEC final results, after the 3.25% threshold
+// and the Bader-Ofer apportionment). Sums to 120. `bloc` groups parties for the
+// coalition-builder presets: net = pro-Netanyahu, opp = opposition/centre-left, arab.
+// (Meretz and Balad fell below the threshold → 0 seats.)
+export const SEATS_25 = {
+  likud:     { seats: 32, bloc: "net" },
+  yesh_atid: { seats: 24, bloc: "opp" },
+  rz:        { seats: 14, bloc: "net" },
+  gantz:     { seats: 12, bloc: "opp" },
+  shas:      { seats: 11, bloc: "net" },
+  utj:       { seats: 7,  bloc: "net" },
+  yb:        { seats: 6,  bloc: "opp" },
+  raam:      { seats: 5,  bloc: "arab" },
+  hadash:    { seats: 5,  bloc: "arab" },
+  labor:     { seats: 4,  bloc: "opp" },
+};
+
 // Knesset 25 (2022) — letter → family.
 export const K25_LETTERS = {
   "מחל": "likud",

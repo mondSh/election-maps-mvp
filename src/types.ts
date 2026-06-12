@@ -66,3 +66,18 @@ export interface SankeyData {
 
 /** Coloring mode for the choropleth: the winning party, or one party's vote-share. */
 export type ColorMode = { kind: "winner" } | { kind: "party"; family: FamilyKey };
+
+export type Bloc = "net" | "opp" | "arab";
+export interface SeatParty {
+  family: FamilyKey;
+  label: string;
+  color: string;
+  seats: number;
+  bloc: Bloc;
+}
+export interface SeatsData {
+  knesset: number;
+  majority: number;
+  total: number;
+  parties: SeatParty[];
+}

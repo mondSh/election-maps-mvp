@@ -6,10 +6,11 @@ import SummaryBar from "./components/SummaryBar";
 import ControlPanel from "./components/ControlPanel";
 import InfoPanel from "./components/InfoPanel";
 import SankeyView from "./components/SankeyView";
+import CoalitionBuilder from "./components/CoalitionBuilder";
 import LoginModal from "./components/LoginModal";
 import { fmt, pct } from "./format";
 
-type Tab = "map" | "sankey";
+type Tab = "map" | "sankey" | "coalition";
 
 export default function App() {
   const [data, setData] = useState<AppData | null>(null);
@@ -78,6 +79,7 @@ export default function App() {
         <div className="header-right">
           <nav className="tabs" role="tablist">
             <button role="tab" aria-selected={tab === "map"} className={tab === "map" ? "tab active" : "tab"} onClick={() => setTab("map")}>מפת תוצאות</button>
+            <button role="tab" aria-selected={tab === "coalition"} className={tab === "coalition" ? "tab active" : "tab"} onClick={() => { setDrillCity(null); setTab("coalition"); }}>בנה ממשלה</button>
             <button role="tab" aria-selected={tab === "sankey"} className={tab === "sankey" ? "tab active" : "tab"} onClick={() => { setDrillCity(null); setTab("sankey"); }}>קולות נודדים</button>
           </nav>
           <button
@@ -148,6 +150,10 @@ export default function App() {
               <p className="muted">שימו לב: צביעה לפי שטח מדגישה יישובים גדולים בשטח; לחיצה על יישוב מציגה תמיד את מספרי הקולות המלאים.</p>
             </div>
           )}
+        </main>
+      ) : tab === "coalition" ? (
+        <main className="stage coalition-stage">
+          <CoalitionBuilder seats={data.seats} />
         </main>
       ) : (
         <main className="stage sankey-stage">

@@ -1,5 +1,5 @@
 import type { FeatureCollection as GeoJSONFC } from "geojson";
-import type { Parties, Settlements, ResultsMeta, GeoMeta, SankeyData } from "./types";
+import type { Parties, Settlements, ResultsMeta, GeoMeta, SankeyData, SeatsData } from "./types";
 
 const base = import.meta.env.BASE_URL; // "/" in dev & prod
 const url = (name: string) => `${base}data/${name}`;
@@ -43,6 +43,7 @@ export interface AppData {
   // MapLibre as parsed objects — its worker can't carry the cookie past the gate.
   settlementsGeo: FeatureCollection;
   pointsGeo: FeatureCollection;
+  seats: SeatsData;
   /** Optional Tel Aviv neighborhood drill-down (present only if the demo data was built). */
   cityDrill: CityDrillMeta | null;
 }
@@ -59,8 +60,9 @@ export async function loadAppData(): Promise<AppData> {
     getJson<FeatureCollection>("k25-settlements.geojson"),
     getJson<FeatureCollection>("k25-settlements-points.geojson"),
   ]);
+  const seats = await getJson<SeatsData>("seats-25.json");
   const cityDrill = await getJson<CityDrillMeta>("telaviv-sa-meta.json").catch(() => null);
-  return { parties, settlements, points, resultsMeta, geoMeta, sankey, settlementsGeo, pointsGeo, cityDrill };
+  return { parties, settlements, points, resultsMeta, geoMeta, sankey, settlementsGeo, pointsGeo, seats, cityDrill };
 }
 
 /** Fetch the city drill-down GeoJSON on demand (also through the auth cookie). */

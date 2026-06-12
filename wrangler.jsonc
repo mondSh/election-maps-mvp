@@ -1,10 +1,16 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "election-maps",
+  "name": "election-maps-mvp",
   "compatibility_date": "2026-06-11",
-  // Assets-only SPA: no Worker `main` entry. The @cloudflare/vite-plugin wires
-  // the Vite build output (dist/) as the asset directory automatically.
+  // A tiny Worker gates the data files behind an access code (see src/worker.ts).
+  // The app shell stays public so the login UI can load; everything else falls
+  // through to static assets via the ASSETS binding.
+  "main": "./src/worker.ts",
   "assets": {
-    "not_found_handling": "single-page-application"
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    // Run the Worker first for these routes so the gate applies; all other assets
+    // (HTML/JS/CSS/fonts) are served directly by the asset server (fast + public).
+    "run_worker_first": ["/data/*", "/api/*"]
   }
 }

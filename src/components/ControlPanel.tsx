@@ -37,14 +37,14 @@ export default function ControlPanel({ parties, national, colorMode, onChange }:
             </div>
           ))}
           <div className="legend-row">
-            <span className="legend-swatch" style={{ background: "#e3ded3" }} />
+            <span className="legend-swatch" style={{ background: "var(--nodata)" }} />
             <span className="legend-name">ללא נתונים</span>
           </div>
         </div>
       ) : (
         <div className="legend">
           <div className="legend-name" style={{ marginBottom: 6 }}>{parties[colorMode.family]?.label} — אחוז קולות</div>
-          <div className="gradient" style={{ background: `linear-gradient(90deg, #eef1f4, ${parties[colorMode.family]?.color})` }} />
+          <div className="gradient" style={{ background: `linear-gradient(90deg, var(--grad-low), ${parties[colorMode.family]?.color})` }} />
           <div className="gradient-scale"><span>0%</span><span>50%+</span></div>
         </div>
       )}

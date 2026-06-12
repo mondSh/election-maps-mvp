@@ -2,11 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import maplibregl, { Map as MlMap, type StyleSpecification, type ExpressionSpecification, type GeoJSONSource } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { ColorMode, Parties, Settlements } from "../types";
-import { GEOJSON_SETTLEMENTS, GEOJSON_POINTS, type PointLookup } from "../data";
+import type { PointLookup, FeatureCollection } from "../data";
 import { fmt, pct } from "../format";
 
-const NO_DATA = "#e3ded3"; // settlements with a polygon but no election join
-const SEA = "#dfe7ec";
+export type Theme = "light" | "dark";
+
+// Map palette per theme. Party colors are brand colors and stay constant; only the
+// "scaffolding" colors (sea background, no-data fill, gradient low-end, selected
+// outline) flip between light and dark.
+const PALETTE: Record<Theme, { sea: string; noData: string; gradLow: string; selected: string }> = {
+  light: { sea: "#dfe7ec", noData: "#e3ded3", gradLow: "#eef1f4", selected: "#11161d" },
+  dark: { sea: "#0e131b", noData: "#2c333f", gradLow: "#1b2330", selected: "#f2f5f9" },
+};
 
 interface Props {
   parties: Parties;
@@ -15,56 +22,64 @@ interface Props {
   colorMode: ColorMode;
   selected: string | null;
   onSelect: (semel: string | null) => void;
+  settlementsGeo: FeatureCollection;
+  pointsGeo: FeatureCollection;
   /** When set, swap to the neighborhood (statistical-area) drill-down for that GeoJSON. */
-  drillUrl: string | null;
+  drillData: FeatureCollection | null;
+  theme: Theme;
 }
 
 const NATIONAL_LAYERS = ["settle-fill", "settle-line", "settle-selected", "bubbles"];
 const TLV_BOUNDS: [[number, number], [number, number]] = [[34.736, 32.01], [34.862, 32.13]];
 const ISRAEL_BOUNDS: [[number, number], [number, number]] = [[34.2, 29.45], [35.95, 33.4]];
 
+type Pal = (typeof PALETTE)[Theme];
+
 /** fill-color expression for the current coloring mode. */
-function fillExpression(mode: ColorMode, parties: Parties): ExpressionSpecification {
+function fillExpression(mode: ColorMode, parties: Parties, pal: Pal): ExpressionSpecification {
   if (mode.kind === "winner") {
     const pairs: (string | string[])[] = [];
     for (const [key, p] of Object.entries(parties)) {
       if (key === "other") continue;
       pairs.push(key, p.color);
     }
-    return ["match", ["get", "winner"], ...pairs, NO_DATA] as unknown as ExpressionSpecification;
+    return ["match", ["get", "winner"], ...pairs, pal.noData] as unknown as ExpressionSpecification;
   }
   const color = parties[mode.family]?.color ?? "#3367d6";
   return [
     "interpolate", ["linear"], ["coalesce", ["get", `sh_${mode.family}`], 0],
-    0, "#eef1f4",
+    0, pal.gradLow,
     0.5, color,
   ] as ExpressionSpecification;
 }
 
-function baseStyle(): StyleSpecification {
+function baseStyle(pal: Pal): StyleSpecification {
   // No `glyphs` key at all — we render labels as HTML markers, not GL symbols.
   return {
     version: 8,
     sources: {},
-    layers: [{ id: "bg", type: "background", paint: { "background-color": SEA } }],
+    layers: [{ id: "bg", type: "background", paint: { "background-color": pal.sea } }],
   };
 }
 
-export default function MapView({ parties, settlements, points, colorMode, selected, onSelect, drillUrl }: Props) {
+export default function MapView({ parties, settlements, points, colorMode, selected, onSelect, settlementsGeo, pointsGeo, drillData, theme }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const hoveredRef = useRef<string | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
   const [ready, setReady] = useState(false);
 
   // ---- init map once ----
   useEffect(() => {
     if (!containerRef.current) return;
+    const pal = PALETTE[themeRef.current];
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: baseStyle(),
+      style: baseStyle(pal),
       center: [35.1, 31.4],
       zoom: 6.7,
       minZoom: 6,
@@ -81,13 +96,13 @@ export default function MapView({ parties, settlements, points, colorMode, selec
     popupRef.current = popup;
 
     map.on("load", () => {
-      map.addSource("settlements", { type: "geojson", data: GEOJSON_SETTLEMENTS, promoteId: "semel" });
-      map.addSource("points", { type: "geojson", data: GEOJSON_POINTS, promoteId: "semel" });
+      map.addSource("settlements", { type: "geojson", data: settlementsGeo, promoteId: "semel" });
+      map.addSource("points", { type: "geojson", data: pointsGeo, promoteId: "semel" });
 
       map.addLayer({
         id: "settle-fill", type: "fill", source: "settlements",
         paint: {
-          "fill-color": fillExpression(colorMode, parties),
+          "fill-color": fillExpression(colorMode, parties, pal),
           "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.82],
         },
       });
@@ -98,14 +113,14 @@ export default function MapView({ parties, settlements, points, colorMode, selec
       map.addLayer({
         id: "settle-selected", type: "line", source: "settlements",
         filter: ["==", ["get", "semel"], -1],
-        paint: { "line-color": "#11161d", "line-width": 2.2 },
+        paint: { "line-color": pal.selected, "line-width": 2.2 },
       });
 
       // West-Bank / no-polygon settlements as proportional bubbles.
       map.addLayer({
         id: "bubbles", type: "circle", source: "points",
         paint: {
-          "circle-color": winnerCircleColor(parties),
+          "circle-color": winnerCircleColor(parties, pal),
           "circle-radius": ["interpolate", ["linear"], ["sqrt", ["coalesce", ["get", "valid"], 0]], 0, 2.5, 60, 6, 170, 14],
           "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.92,
         },
@@ -158,14 +173,18 @@ export default function MapView({ parties, settlements, points, colorMode, selec
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ---- recolor when colorMode changes (national + drill layers) ----
+  // ---- repaint on colorMode or theme change (national + drill layers) ----
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
-    const expr = fillExpression(colorMode, parties);
+    if (!map || !ready) return;
+    const pal = PALETTE[theme];
+    const expr = fillExpression(colorMode, parties, pal);
+    map.setPaintProperty("bg", "background-color", pal.sea);
     if (map.getLayer("settle-fill")) map.setPaintProperty("settle-fill", "fill-color", expr);
     if (map.getLayer("city-fill")) map.setPaintProperty("city-fill", "fill-color", expr);
-  }, [colorMode, parties]);
+    if (map.getLayer("bubbles")) map.setPaintProperty("bubbles", "circle-color", winnerCircleColor(parties, pal));
+    if (map.getLayer("settle-selected")) map.setPaintProperty("settle-selected", "line-color", pal.selected);
+  }, [colorMode, theme, parties, ready]);
 
   // ---- city drill-down: swap to statistical-area resolution ----
   useEffect(() => {
@@ -176,12 +195,12 @@ export default function MapView({ parties, settlements, points, colorMode, selec
       for (const id of ids) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", v);
     };
 
-    if (drillUrl) {
+    if (drillData) {
       if (!map.getSource("city")) {
-        map.addSource("city", { type: "geojson", data: drillUrl, promoteId: "sa" });
+        map.addSource("city", { type: "geojson", data: drillData, promoteId: "sa" });
         map.addLayer({
           id: "city-fill", type: "fill", source: "city",
-          paint: { "fill-color": fillExpression(colorMode, parties), "fill-opacity": 0.85 },
+          paint: { "fill-color": fillExpression(colorMode, parties, PALETTE[themeRef.current]), "fill-opacity": 0.85 },
         });
         map.addLayer({
           id: "city-line", type: "line", source: "city",
@@ -200,7 +219,7 @@ export default function MapView({ parties, settlements, points, colorMode, selec
         });
         map.on("mouseleave", "city-fill", () => { map.getCanvas().style.cursor = ""; popupRef.current?.remove(); });
       } else {
-        (map.getSource("city") as GeoJSONSource).setData(drillUrl);
+        (map.getSource("city") as GeoJSONSource).setData(drillData);
         setVis(["city-fill", "city-line"], "visible");
       }
       setVis(NATIONAL_LAYERS, "none");
@@ -211,7 +230,7 @@ export default function MapView({ parties, settlements, points, colorMode, selec
       map.fitBounds(ISRAEL_BOUNDS, { padding: 24, animate: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drillUrl, ready]);
+  }, [drillData, ready]);
 
   // ---- selected highlight + fly ----
   useEffect(() => {
@@ -226,13 +245,13 @@ export default function MapView({ parties, settlements, points, colorMode, selec
   return <div ref={containerRef} className="map-canvas" />;
 }
 
-function winnerCircleColor(parties: Parties): ExpressionSpecification {
+function winnerCircleColor(parties: Parties, pal: Pal): ExpressionSpecification {
   const pairs: (string | string[])[] = [];
   for (const [key, p] of Object.entries(parties)) {
     if (key === "other") continue;
     pairs.push(key, p.color);
   }
-  return ["match", ["get", "winner"], ...pairs, NO_DATA] as unknown as ExpressionSpecification;
+  return ["match", ["get", "winner"], ...pairs, pal.noData] as unknown as ExpressionSpecification;
 }
 
 /** A handful of HTML markers for the biggest cities — no glyph server needed. */

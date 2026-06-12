@@ -5,3 +5,4 @@ dist/
 .DS_Store
 # ETL working scratch (raw API dumps); generated public/data IS committed
 etl/raw/
+.dev.vars

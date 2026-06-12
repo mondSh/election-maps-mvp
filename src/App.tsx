@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
-import { loadAppData, TELAVIV_SA_URL, type AppData } from "./data";
+import { useCallback, useEffect, useState } from "react";
+import { loadAppData, loadCityDrill, AuthRequiredError, type AppData, type FeatureCollection } from "./data";
 import type { ColorMode } from "./types";
-import MapView from "./components/MapView";
+import MapView, { type Theme } from "./components/MapView";
 import SummaryBar from "./components/SummaryBar";
 import ControlPanel from "./components/ControlPanel";
 import InfoPanel from "./components/InfoPanel";
 import SankeyView from "./components/SankeyView";
+import LoginModal from "./components/LoginModal";
 import { fmt, pct } from "./format";
 
 type Tab = "map" | "sankey";
@@ -18,15 +19,49 @@ export default function App() {
   const [selected, setSelected] = useState<string | null>(null);
   const [showMethod, setShowMethod] = useState(false);
   const [drillCity, setDrillCity] = useState<string | null>(null);
+  const [theme, setTheme] = useState<Theme>(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark" || saved === "light") return saved;
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
+  const [needAuth, setNeedAuth] = useState(false);
+  const [authedFlag, setAuthedFlag] = useState(() => !!localStorage.getItem("app_authed"));
+  const [drillData, setDrillData] = useState<FeatureCollection | null>(null);
+
+  const load = useCallback(() => {
+    loadAppData()
+      .then((d) => { setData(d); setNeedAuth(false); setError(null); })
+      .catch((e) => { if (e instanceof AuthRequiredError) setNeedAuth(true); else setError(String(e)); });
+  }, []);
 
   useEffect(() => {
-    loadAppData().then(setData).catch((e) => setError(String(e)));
+    load();
     // Shareable deep-link to the city drill-down, e.g. ?drill=5000
     const drill = new URLSearchParams(window.location.search).get("drill");
     if (drill) setDrillCity(drill);
-  }, []);
+  }, [load]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  // Lazy-load the city drill-down GeoJSON (through the auth cookie) on first use.
+  useEffect(() => {
+    if (drillCity && !drillData) loadCityDrill().then(setDrillData).catch(() => {});
+  }, [drillCity, drillData]);
+
+  const onAuthSuccess = () => { localStorage.setItem("app_authed", "1"); setAuthedFlag(true); load(); };
+  const logout = async () => {
+    await fetch("/api/logout", { method: "POST" }).catch(() => {});
+    localStorage.removeItem("app_authed");
+    setAuthedFlag(false);
+    setData(null);
+    setNeedAuth(true);
+  };
 
   if (error) return <div className="loading">שגיאה בטעינת הנתונים: {error}</div>;
+  if (needAuth) return <LoginModal onSuccess={onAuthSuccess} />;
   if (!data) return <div className="loading"><div className="spinner" />טוען נתונים…</div>;
 
   const k25 = data.resultsMeta.knessets["25"];
@@ -40,10 +75,23 @@ export default function App() {
           <h1>מפת הבחירות לכנסת ה-25</h1>
           <p className="subtitle">תוצאות לפי יישוב · נתונים פתוחים מוועדת הבחירות המרכזית והלשכה המרכזית לסטטיסטיקה</p>
         </div>
-        <nav className="tabs" role="tablist">
-          <button role="tab" aria-selected={tab === "map"} className={tab === "map" ? "tab active" : "tab"} onClick={() => setTab("map")}>מפת תוצאות</button>
-          <button role="tab" aria-selected={tab === "sankey"} className={tab === "sankey" ? "tab active" : "tab"} onClick={() => { setDrillCity(null); setTab("sankey"); }}>קולות נודדים</button>
-        </nav>
+        <div className="header-right">
+          <nav className="tabs" role="tablist">
+            <button role="tab" aria-selected={tab === "map"} className={tab === "map" ? "tab active" : "tab"} onClick={() => setTab("map")}>מפת תוצאות</button>
+            <button role="tab" aria-selected={tab === "sankey"} className={tab === "sankey" ? "tab active" : "tab"} onClick={() => { setDrillCity(null); setTab("sankey"); }}>קולות נודדים</button>
+          </nav>
+          <button
+            className="theme-toggle"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            aria-label={theme === "dark" ? "עבור למצב בהיר" : "עבור למצב כהה"}
+            title={theme === "dark" ? "מצב בהיר" : "מצב כהה"}
+          >
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
+          {authedFlag && (
+            <button className="logout-btn" onClick={logout} title="התנתקות">יציאה</button>
+          )}
+        </div>
       </header>
 
       <SummaryBar national={k25.national} totalValid={k25.totalValid} parties={data.parties} />
@@ -57,7 +105,10 @@ export default function App() {
             colorMode={colorMode}
             selected={selected}
             onSelect={setSelected}
-            drillUrl={drillCity ? TELAVIV_SA_URL : null}
+            settlementsGeo={data.settlementsGeo}
+            pointsGeo={data.pointsGeo}
+            drillData={drillCity ? drillData : null}
+            theme={theme}
           />
           <ControlPanel parties={data.parties} national={k25.national} colorMode={colorMode} onChange={setColorMode} />
           {drillCity && data.cityDrill && (

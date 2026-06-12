@@ -1,0 +1,5 @@
+# Local secret for the access gate.
+# Copy to .dev.vars (gitignored) and set a value; in production use:
+#   npx wrangler secret put APP_CODE
+# If APP_CODE is unset, the gate is disabled and the app is public.
+APP_CODE=changeme

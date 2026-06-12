@@ -27,6 +27,8 @@ interface Props {
   /** When set, swap to the neighborhood (statistical-area) drill-down for that GeoJSON. */
   drillData: FeatureCollection | null;
   theme: Theme;
+  /** Election year for winner/share coloring: 25 = 2022, 24 = 2021. */
+  year: 24 | 25;
 }
 
 const NATIONAL_LAYERS = ["settle-fill", "settle-line", "settle-selected", "bubbles"];
@@ -35,19 +37,34 @@ const ISRAEL_BOUNDS: [[number, number], [number, number]] = [[34.2, 29.45], [35.
 
 type Pal = (typeof PALETTE)[Theme];
 
-/** fill-color expression for the current coloring mode. */
-function fillExpression(mode: ColorMode, parties: Parties, pal: Pal): ExpressionSpecification {
+/** fill-color expression for the current coloring mode + election year. */
+function fillExpression(mode: ColorMode, parties: Parties, pal: Pal, year: 24 | 25): ExpressionSpecification {
+  const winnerField = year === 25 ? "winner" : "winner24";
+  const sharePrefix = year === 25 ? "sh" : "sh24";
   if (mode.kind === "winner") {
     const pairs: (string | string[])[] = [];
     for (const [key, p] of Object.entries(parties)) {
       if (key === "other") continue;
       pairs.push(key, p.color);
     }
-    return ["match", ["get", "winner"], ...pairs, pal.noData] as unknown as ExpressionSpecification;
+    return ["match", ["get", winnerField], ...pairs, pal.noData] as unknown as ExpressionSpecification;
+  }
+  if (mode.kind === "swing") {
+    // Δ vote-share 2021→2022 for the selected party; neutral where K24 data is absent.
+    const delta: ExpressionSpecification = [
+      "case",
+      ["all", ["has", `sh_${mode.family}`], ["has", `sh24_${mode.family}`]],
+      ["-", ["get", `sh_${mode.family}`], ["get", `sh24_${mode.family}`]],
+      0,
+    ] as unknown as ExpressionSpecification;
+    return [
+      "interpolate", ["linear"], delta,
+      -0.12, "#b3322c", -0.03, "#dca39b", 0, pal.gradLow, 0.03, "#8fb4e0", 0.12, "#1f4e8c",
+    ] as unknown as ExpressionSpecification;
   }
   const color = parties[mode.family]?.color ?? "#3367d6";
   return [
-    "interpolate", ["linear"], ["coalesce", ["get", `sh_${mode.family}`], 0],
+    "interpolate", ["linear"], ["coalesce", ["get", `${sharePrefix}_${mode.family}`], 0],
     0, pal.gradLow,
     0.5, color,
   ] as ExpressionSpecification;
@@ -62,7 +79,7 @@ function baseStyle(pal: Pal): StyleSpecification {
   };
 }
 
-export default function MapView({ parties, settlements, points, colorMode, selected, onSelect, settlementsGeo, pointsGeo, drillData, theme }: Props) {
+export default function MapView({ parties, settlements, points, colorMode, selected, onSelect, settlementsGeo, pointsGeo, drillData, theme, year }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const hoveredRef = useRef<string | null>(null);
@@ -71,6 +88,8 @@ export default function MapView({ parties, settlements, points, colorMode, selec
   onSelectRef.current = onSelect;
   const themeRef = useRef(theme);
   themeRef.current = theme;
+  const yearRef = useRef(year);
+  yearRef.current = year;
   const [ready, setReady] = useState(false);
 
   // ---- init map once ----
@@ -102,7 +121,7 @@ export default function MapView({ parties, settlements, points, colorMode, selec
       map.addLayer({
         id: "settle-fill", type: "fill", source: "settlements",
         paint: {
-          "fill-color": fillExpression(colorMode, parties, pal),
+          "fill-color": fillExpression(colorMode, parties, pal, yearRef.current),
           "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.82],
         },
       });
@@ -178,13 +197,13 @@ export default function MapView({ parties, settlements, points, colorMode, selec
     const map = mapRef.current;
     if (!map || !ready) return;
     const pal = PALETTE[theme];
-    const expr = fillExpression(colorMode, parties, pal);
+    const expr = fillExpression(colorMode, parties, pal, year);
     map.setPaintProperty("bg", "background-color", pal.sea);
     if (map.getLayer("settle-fill")) map.setPaintProperty("settle-fill", "fill-color", expr);
     if (map.getLayer("city-fill")) map.setPaintProperty("city-fill", "fill-color", expr);
     if (map.getLayer("bubbles")) map.setPaintProperty("bubbles", "circle-color", winnerCircleColor(parties, pal));
     if (map.getLayer("settle-selected")) map.setPaintProperty("settle-selected", "line-color", pal.selected);
-  }, [colorMode, theme, parties, ready]);
+  }, [colorMode, theme, parties, ready, year]);
 
   // ---- city drill-down: swap to statistical-area resolution ----
   useEffect(() => {
@@ -200,7 +219,7 @@ export default function MapView({ parties, settlements, points, colorMode, selec
         map.addSource("city", { type: "geojson", data: drillData, promoteId: "sa" });
         map.addLayer({
           id: "city-fill", type: "fill", source: "city",
-          paint: { "fill-color": fillExpression(colorMode, parties, PALETTE[themeRef.current]), "fill-opacity": 0.85 },
+          paint: { "fill-color": fillExpression(colorMode, parties, PALETTE[themeRef.current], yearRef.current), "fill-opacity": 0.85 },
         });
         map.addLayer({
           id: "city-line", type: "line", source: "city",

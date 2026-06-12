@@ -66,6 +66,7 @@ async function main() {
   const fc = JSON.parse(simplified["out.geojson"].toString());
 
   const results = JSON.parse(readFileSync(join(OUT, "k25-settlements.json")));
+  const results24 = JSON.parse(readFileSync(join(OUT, "k24-settlements.json")));
   const meta = JSON.parse(readFileSync(join(OUT, "results-meta.json")));
   const totalValid = meta.knessets["25"].totalValid;
 
@@ -75,6 +76,7 @@ async function main() {
   for (const f of fc.features) {
     const semel = Number(f.properties.SEMEL_YISH);
     const r = results[String(semel)];
+    const r24 = results24[String(semel)];
     const props = { semel, name: r?.name ?? "", winner: r?.winner ?? null };
     if (r) {
       mappedValid += r.valid;
@@ -85,7 +87,11 @@ async function main() {
       for (const fam of FAMILY_KEYS) {
         const v = r.parties[fam];
         if (v) props[`sh_${fam}`] = +(v / r.valid).toFixed(4);
+        // K24 share of the same family → enables the 24→25 swing map.
+        const v24 = r24?.parties?.[fam];
+        if (r24 && v24 && r24.valid > 0) props[`sh24_${fam}`] = +(v24 / r24.valid).toFixed(4);
       }
+      if (r24) props.winner24 = r24.winner;
     }
     f.properties = props;
   }

@@ -64,8 +64,11 @@ export interface SankeyData {
   links: SankeyLink[];
 }
 
-/** Coloring mode for the choropleth: the winning party, or one party's vote-share. */
-export type ColorMode = { kind: "winner" } | { kind: "party"; family: FamilyKey };
+/** Coloring mode: winning party, one party's vote-share, or its 2021→2022 swing. */
+export type ColorMode =
+  | { kind: "winner" }
+  | { kind: "party"; family: FamilyKey }
+  | { kind: "swing"; family: FamilyKey };
 
 export type Bloc = "net" | "opp" | "arab";
 export interface SeatParty {

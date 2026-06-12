@@ -17,6 +17,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("map");
   const [colorMode, setColorMode] = useState<ColorMode>({ kind: "winner" });
+  const [year, setYear] = useState<24 | 25>(25);
   const [selected, setSelected] = useState<string | null>(null);
   const [showMethod, setShowMethod] = useState(false);
   const [drillCity, setDrillCity] = useState<string | null>(null);
@@ -111,8 +112,9 @@ export default function App() {
             pointsGeo={data.pointsGeo}
             drillData={drillCity ? drillData : null}
             theme={theme}
+            year={year}
           />
-          <ControlPanel parties={data.parties} national={k25.national} colorMode={colorMode} onChange={setColorMode} />
+          <ControlPanel parties={data.parties} national={k25.national} colorMode={colorMode} onChange={setColorMode} year={year} onYear={setYear} />
           {drillCity && data.cityDrill && (
             <div className="drill-banner">
               <div>

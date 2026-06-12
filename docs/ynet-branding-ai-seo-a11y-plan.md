@@ -17,21 +17,22 @@ status: מוכן לביצוע מדורג
 
 ---
 
-## נכסי המותג שנאספו מ-www.ynet.co.il
+## נכסי המותג — מתוך ה-Design System הרשמי של ynet (Figma)
 
-| נכס | ערך שנמדד | הערה |
-|---|---|---|
-| **אדום ynet (ראשי)** | `#DE1A1A` (rgb 222,26,26) | הצבע השליט בכותרת/קישורים |
-| אדום כהה (hover/דארק) | `#A10000` | וריאנט כהה |
-| אדום בהיר | `#DF3232` | וריאנט בהיר |
-| לוגו | `…/new_logo_gif_ynet.gif` (alt: "לוגו של ynet") | זה GIF — **לבקש SVG וקטורי** מצוות המותג |
-| favicon | `https://www.ynet.co.il/images/favicon/favicon_1.ico` | להחליף את ה-🗳️ הזמני |
-| תמונת שיתוף (OG) | `…/og/logo/www.ynet.co.il_new.png` | בסיס לכרטיס שיתוף |
-| meta | `application-name: ynet`, `twitter:card: summary_large_image`, description בעברית | תבנית למטא של הרכיב |
-| שפה/כיוון | `lang="he"`, RTL | תואם לדמו |
-| פונט | מותג (לא חינמי) | להשתמש בפונט הרשמי; **Heebo/Assistant** כ-fallback חינמי (כבר בדמו) |
+**מקור מוסמך:** קובץ ה-Design System של ynet ב-Figma (לא גירוד מהאתר). אלה ה-tokens הרשמיים, עם השמות שלהם:
 
-> ⚠️ **רישוי נכסים:** הלוגו והפונט הם קניין המותג. השתמש ב**נכסים הרשמיים מ-brand-kit של ynet** (לוגו SVG, פונט מורשה) ולא בקובץ GIF מגורד, ובקש אישור צוות המותג — גם לפרויקט פנימי.
+| token | ערך | שם רשמי | שימוש |
+|---|---|---|---|
+| **`color/red/red-500`** | **`#DE1A1A`** | **ynet Brand / Maximum Red** | האדום המוביל — chrome בלבד |
+| **`color/blue/blue-500`** | **`#1417AC`** | Blue 500 | צבע מותג שני |
+| `color/primary/black` | `#000000` | Primary / Black | טקסט/רקע כהה |
+| **גרדיאנט המותג** | `#DE1A1A → #1417AC` | — | פס אנכי אדום→כחול (אלמנט-חתימה של ynet) |
+| **פונט** | **`Moses`** (MosesText) | — | הטיפוגרפיה הרשמית — **מורשה**; Heebo/Assistant כ-fallback חינמי (כבר בדמו) |
+| לוגו | סט וקטורי "Logos / Ynet (Scalable)" | — | סמל ה-**y** באדום בעיגול + **net** |
+
+נכסים נלווים מהאתר החי (לגיבוי): favicon `…/favicon/favicon_1.ico`, OG `…/og/logo/www.ynet.co.il_new.png`, meta `application-name: ynet` + `twitter:card: summary_large_image`.
+
+> ✅ **זה בדיוק מה שהתוכנית המליצה:** להשתמש בנכסים הרשמיים מה-brand-kit ולא בקבצים מגורדים. ה-Design System נותן לוגו וקטורי, פונט רשמי, ו-tokens מדויקים בשמות הנכונים. עדיין כדאי אישור צוות המותג גם לפרויקט פנימי.
 
 ---
 
@@ -40,13 +41,16 @@ status: מוכן לביצוע מדורג
 הדמו משתמש כבר היום ב-CSS custom properties. מיתוג = להחליף ערכים בלבד:
 
 ```css
-/* מצב נוכחי → ynet */
---accent: #1f4e8c  →  #DE1A1A   /* אדום ynet — לכפתורים/קישורים/active בלבד */
+/* מצב נוכחי → tokens רשמיים מה-Design System */
+--accent: #1f4e8c  →  #DE1A1A   /* Maximum Red — לכפתורים/קישורים/active בלבד */
+--brand-blue:          #1417AC   /* token שני; אפשר ל-focus-rings/הדגשות משניות */
 --accent-soft / --accent-soft-2 → גווני אדום שקופים
+--font: "Moses", "Heebo", system-ui   /* פונט מותג עם fallback חינמי */
 /* dark mode: --accent → גוון אדום בהיר יותר לקריאות על רקע כהה */
 ```
 
-**אסור** לגעת ב-`party-map.mjs` ובצבעי המפלגות. אדום-ynet רק ל-chrome. כך אין סיכון של התנגשות בין "אדום המותג" ל"אדום מפלגה" ולא נפגעת קריאוּת הדאטה.
+- **גרדיאנט-החתימה (`#DE1A1A → #1417AC`):** פס אנכי דק בקצה הימני של ה-header — אלמנט-מותג מיידי-זיהוי, בדיוק כמו ב-Cover של ה-Design System. אפס השפעה על הדאטה.
+- **אסור** לגעת ב-`party-map.mjs` ובצבעי המפלגות. אדום-ynet רק ל-chrome. כך אין התנגשות בין "אדום המותג" ל"אדום מפלגה" ולא נפגעת קריאוּת הדאטה.
 
 ---
 

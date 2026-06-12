@@ -73,7 +73,10 @@ body { font-family: var(--font); color: var(--ink); background: var(--bg); -webk
 
 /* ---------- stage / map ---------- */
 .stage { flex: 1; position: relative; overflow: hidden; }
-.map-canvas { position: absolute; inset: 0; }
+/* width/height 100% (not just inset:0) so the container keeps its size even when
+   MapLibre's own `.maplibregl-map { position: relative }` wins the cascade — its CSS
+   now loads after this file in a lazy chunk. */
+.map-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 
 .panel {
   position: absolute; background: var(--panel); border: 1px solid var(--line);

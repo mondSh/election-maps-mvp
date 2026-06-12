@@ -70,6 +70,26 @@ export type ColorMode =
   | { kind: "party"; family: FamilyKey }
   | { kind: "swing"; family: FamilyKey };
 
+export interface SocioSeries {
+  family: FamilyKey;
+  label: string;
+  color: string;
+  points: { cluster: number; share: number }[];
+}
+export interface SocioCluster {
+  cluster: number;
+  localities: number;
+  valid: number;
+  turnout: number;
+  shares: Record<FamilyKey, number>;
+}
+export interface SocioData {
+  source: string;
+  matchedLocalities: number;
+  clusters: SocioCluster[];
+  series: SocioSeries[];
+}
+
 export type Bloc = "net" | "opp" | "arab";
 export interface SeatParty {
   family: FamilyKey;

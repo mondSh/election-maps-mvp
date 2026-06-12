@@ -7,10 +7,11 @@ import ControlPanel from "./components/ControlPanel";
 import InfoPanel from "./components/InfoPanel";
 import SankeyView from "./components/SankeyView";
 import CoalitionBuilder from "./components/CoalitionBuilder";
+import DemographicsView from "./components/DemographicsView";
 import LoginModal from "./components/LoginModal";
 import { fmt, pct } from "./format";
 
-type Tab = "map" | "sankey" | "coalition";
+type Tab = "map" | "sankey" | "coalition" | "demo";
 
 export default function App() {
   const [data, setData] = useState<AppData | null>(null);
@@ -81,6 +82,7 @@ export default function App() {
           <nav className="tabs" role="tablist">
             <button role="tab" aria-selected={tab === "map"} className={tab === "map" ? "tab active" : "tab"} onClick={() => setTab("map")}>מפת תוצאות</button>
             <button role="tab" aria-selected={tab === "coalition"} className={tab === "coalition" ? "tab active" : "tab"} onClick={() => { setDrillCity(null); setTab("coalition"); }}>בנה ממשלה</button>
+            <button role="tab" aria-selected={tab === "demo"} className={tab === "demo" ? "tab active" : "tab"} onClick={() => { setDrillCity(null); setTab("demo"); }}>דמוגרפיה</button>
             <button role="tab" aria-selected={tab === "sankey"} className={tab === "sankey" ? "tab active" : "tab"} onClick={() => { setDrillCity(null); setTab("sankey"); }}>קולות נודדים</button>
           </nav>
           <button
@@ -156,6 +158,10 @@ export default function App() {
       ) : tab === "coalition" ? (
         <main className="stage coalition-stage">
           <CoalitionBuilder seats={data.seats} />
+        </main>
+      ) : tab === "demo" ? (
+        <main className="stage coalition-stage">
+          <DemographicsView socio={data.socio} />
         </main>
       ) : (
         <main className="stage sankey-stage">

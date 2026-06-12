@@ -17,6 +17,16 @@ deployed to **Cloudflare**. Demo for a ynet product review.
 - **Neighborhood drill-down (Tel Aviv):** a controlled "premium" demo at statistical-area
   resolution — the only feature that touches geocoding (cached Nominatim), clearly labeled
   as pending an address-file licensing decision.
+- **Coalition builder ("בנה ממשלה"):** a 120-seat hemicycle — click parties to assemble a
+  coalition, live 61-seat majority bar, historical presets. Official K25 seats.
+- **Demographics:** vote-share per party across the **CBS socio-economic clusters** (1–10),
+  with an ecological-fallacy caveat. Green (CBS).
+- **Swing map + year toggle:** per-settlement 2021→2022 shift (diverging), and a 2022⇄2021
+  winner toggle.
+- **Bubbles view:** a proportional-symbol map (vote-sized circles) that removes the
+  choropleth's area-bias.
+
+See `docs/election-2026-components-ideas.md` for the researched roadmap these were drawn from.
 
 - **Dark mode:** UI **and** map theme, toggle in the header, follows `prefers-color-scheme`,
   persisted to `localStorage`, applied before first paint (no flash).

@@ -18,11 +18,27 @@ deployed to **Cloudflare**. Demo for a ynet product review.
   resolution — the only feature that touches geocoding (cached Nominatim), clearly labeled
   as pending an address-file licensing decision.
 
+- **Dark mode:** UI **and** map theme, toggle in the header, follows `prefers-color-scheme`,
+  persisted to `localStorage`, applied before first paint (no flash).
+- **Access gate:** a small Cloudflare Worker (`src/worker.ts`) gates the data behind an
+  access code; correct code → 30-day HttpOnly cookie. Login modal + logout button. The app
+  shell stays public so the login screen can load. **If `APP_CODE` is unset the gate is
+  disabled** and the app is fully public.
+
 ## Stack
 
 Vite + React + TypeScript · MapLibre GL (self-contained style — no tile/font/RTL-plugin
-third-party calls) · d3-sankey · deployed to **Cloudflare** as a static-assets SPA via
-`@cloudflare/vite-plugin` + Wrangler v4.
+third-party calls) · d3-sankey · deployed to **Cloudflare** as a **Worker + static assets**
+via `@cloudflare/vite-plugin` + Wrangler v4.
+
+## Access code (gate)
+
+- Local: set the secret in `.dev.vars` (gitignored) — `APP_CODE=...` (see `.dev.vars.example`).
+  The gate is enforced by the real Worker, so test it with `wrangler dev` (Vite's dev server
+  serves `public/` directly and bypasses the gate).
+- Production: `npx wrangler secret put APP_CODE`.
+- Note: GeoJSON is fetched on the main thread (with the cookie) and handed to MapLibre as a
+  parsed object — MapLibre's web worker can't carry the cookie past the gate.
 
 ## Develop
 
@@ -46,7 +62,8 @@ node etl/04-geocode-city.mjs     # Tel Aviv drill-down (slow; geocode cached)
 ## Deploy
 
 ```bash
-npm run deploy        # vite build && wrangler deploy  (needs `wrangler login`)
+npx wrangler secret put APP_CODE   # set the access code (once)
+npm run deploy                     # vite build && wrangler deploy  (needs `wrangler login`)
 ```
 
 ## Docs

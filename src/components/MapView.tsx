@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import maplibregl, { Map as MlMap, type StyleSpecification, type ExpressionSpecification, type GeoJSONSource } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { ColorMode, Parties, Settlements } from "../types";
+import type { ColorMode, Parties, Settlements, Theme, MapViewMode } from "../types";
 import type { PointLookup, FeatureCollection } from "../data";
 import { fmt, pct } from "../format";
-
-export type Theme = "light" | "dark";
 
 // Map palette per theme. Party colors are brand colors and stay constant; only the
 // "scaffolding" colors (sea background, no-data fill, gradient low-end, selected
@@ -33,8 +31,6 @@ interface Props {
   /** "choropleth" = filled polygons; "bubbles" = vote-sized proportional symbols. */
   mapView: MapViewMode;
 }
-
-export type MapViewMode = "choropleth" | "bubbles";
 
 const TLV_BOUNDS: [[number, number], [number, number]] = [[34.736, 32.01], [34.862, 32.13]];
 const ISRAEL_BOUNDS: [[number, number], [number, number]] = [[34.2, 29.45], [35.95, 33.4]];

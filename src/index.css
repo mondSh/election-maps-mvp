@@ -276,6 +276,7 @@ body { font-family: var(--font); color: var(--ink); background: var(--bg); -webk
 .muted { color: var(--muted); }
 .loading { height: 100vh; display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; color: var(--muted); font-size: 15px; }
 .spinner { width: 34px; height: 34px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.view-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bg); }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .city-label {

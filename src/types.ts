@@ -90,6 +90,11 @@ export interface SocioData {
   series: SocioSeries[];
 }
 
+/** UI + map theme. */
+export type Theme = "light" | "dark";
+/** Map render mode: filled polygons vs. vote-sized proportional symbols. */
+export type MapViewMode = "choropleth" | "bubbles";
+
 export type Bloc = "net" | "opp" | "arab";
 export interface SeatParty {
   family: FamilyKey;

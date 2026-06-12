@@ -1,5 +1,4 @@
-import type { ColorMode, NationalEntry, Parties } from "../types";
-import type { MapViewMode } from "./MapView";
+import type { ColorMode, NationalEntry, Parties, MapViewMode } from "../types";
 
 interface Props {
   parties: Parties;

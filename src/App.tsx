@@ -1,15 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { loadAppData, loadCityDrill, AuthRequiredError, type AppData, type FeatureCollection } from "./data";
-import type { ColorMode } from "./types";
-import MapView, { type Theme, type MapViewMode } from "./components/MapView";
+import type { ColorMode, Theme, MapViewMode } from "./types";
 import SummaryBar from "./components/SummaryBar";
 import ControlPanel from "./components/ControlPanel";
 import InfoPanel from "./components/InfoPanel";
-import SankeyView from "./components/SankeyView";
-import CoalitionBuilder from "./components/CoalitionBuilder";
-import DemographicsView from "./components/DemographicsView";
 import LoginModal from "./components/LoginModal";
 import { fmt, pct } from "./format";
+
+// Lazy-loaded tab views: MapLibre (in MapView) and d3 (Sankey/Demographics) split
+// into their own chunks, so the gated login + app shell load from a tiny bundle and
+// each tab fetches its code on demand.
+const MapView = lazy(() => import("./components/MapView"));
+const SankeyView = lazy(() => import("./components/SankeyView"));
+const CoalitionBuilder = lazy(() => import("./components/CoalitionBuilder"));
+const DemographicsView = lazy(() => import("./components/DemographicsView"));
+
+const ViewLoader = () => <div className="view-loading"><div className="spinner" /></div>;
 
 type Tab = "map" | "sankey" | "coalition" | "demo";
 
@@ -105,6 +111,7 @@ export default function App() {
 
       {tab === "map" ? (
         <main className="stage">
+          <Suspense fallback={<ViewLoader />}>
           <MapView
             parties={data.parties}
             settlements={activeSettlements}
@@ -120,6 +127,7 @@ export default function App() {
             year={year}
             mapView={mapViewMode}
           />
+          </Suspense>
           <ControlPanel parties={data.parties} national={k25.national} colorMode={colorMode} onChange={setColorMode} year={year} onYear={setYear} mapView={mapViewMode} onMapView={setMapViewMode} />
           {drillCity && data.cityDrill && (
             <div className="drill-banner">
@@ -162,11 +170,11 @@ export default function App() {
         </main>
       ) : tab === "coalition" ? (
         <main className="stage coalition-stage">
-          <CoalitionBuilder seats={data.seats} />
+          <Suspense fallback={<ViewLoader />}><CoalitionBuilder seats={data.seats} /></Suspense>
         </main>
       ) : tab === "demo" ? (
         <main className="stage coalition-stage">
-          <DemographicsView socio={data.socio} />
+          <Suspense fallback={<ViewLoader />}><DemographicsView socio={data.socio} /></Suspense>
         </main>
       ) : (
         <main className="stage sankey-stage">
@@ -178,7 +186,7 @@ export default function App() {
               (אין כאן זרמי "נאמנות"). זהו אומדן סטטיסטי מצרפי, חשוף ל<b>כשל אקולוגי</b>, ואינו עוקב אחר מצביעים בודדים.
             </p>
           </div>
-          <SankeyView data={data.sankey} />
+          <Suspense fallback={<ViewLoader />}><SankeyView data={data.sankey} /></Suspense>
           <p className="muted sankey-foot">מוצגות זרימות של {fmt(data.sankey.minLinkShown)}+ קולות. סך הזרימה (השינוי) המוערך: {fmt(data.sankey.totalFlow)} קולות.</p>
         </main>
       )}

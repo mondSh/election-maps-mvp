@@ -4,15 +4,19 @@
   --ink: #1a1d22;
   --muted: #6b7280;
   --line: #e4e7ec;
-  --accent: #1f4e8c;
+  /* ynet Design System: --accent = Maximum Red (chrome only — never data colors). */
+  --accent: #de1a1a;
+  --brand-red: #de1a1a;
+  --brand-blue: #1417ac;
   --track: #f0f1f4;
-  --accent-soft: #f3f7fc;
-  --accent-soft-2: #e9f1fb;
+  --accent-soft: rgba(222, 26, 26, 0.08);
+  --accent-soft-2: rgba(222, 26, 26, 0.15);
   --grad-low: #eef1f4;
   --nodata: #e3ded3;
   --radius: 12px;
   --shadow: 0 2px 8px rgba(20, 28, 45, 0.08), 0 8px 28px rgba(20, 28, 45, 0.10);
-  --font: "Heebo", system-ui, "Segoe UI", "Arial Hebrew", Arial, sans-serif;
+  /* "Moses" = ynet brand font (licensed); falls back to Heebo where unavailable. */
+  --font: "Moses", "Heebo", system-ui, "Segoe UI", "Arial Hebrew", Arial, sans-serif;
 }
 
 [data-theme="dark"] {
@@ -21,10 +25,11 @@
   --ink: #e7eaef;
   --muted: #97a1b0;
   --line: #29313d;
-  --accent: #66a6ef;
+  --accent: #ff5a52;
+  --brand-blue: #6e72e8;
   --track: #232b37;
-  --accent-soft: rgba(102, 166, 239, 0.13);
-  --accent-soft-2: rgba(102, 166, 239, 0.22);
+  --accent-soft: rgba(255, 90, 82, 0.14);
+  --accent-soft-2: rgba(255, 90, 82, 0.24);
   --grad-low: #1b2330;
   --nodata: #2c333f;
   --shadow: 0 2px 10px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -38,11 +43,19 @@ body { font-family: var(--font); color: var(--ink); background: var(--bg); -webk
 
 /* ---------- header ---------- */
 .app-header {
+  position: relative;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  padding: 12px 20px; background: var(--panel); border-bottom: 1px solid var(--line);
+  padding: 12px 20px 12px 20px; background: var(--panel); border-bottom: 1px solid var(--line);
   z-index: 5;
 }
-.brand h1 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+/* ynet brand signature: vertical red→blue gradient bar at the start (right, RTL) edge. */
+.app-header::before {
+  content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 5px;
+  background: linear-gradient(to bottom, var(--brand-red, #de1a1a), var(--brand-blue, #1417ac));
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-logo { height: 30px; width: auto; flex: none; display: block; }
+.brand h1 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
 .subtitle { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); }
 .tabs { display: flex; gap: 6px; background: var(--bg); padding: 4px; border-radius: 10px; }
 .tab {
@@ -254,6 +267,7 @@ body { font-family: var(--font); color: var(--ink); background: var(--bg); -webk
   border-radius: 16px; box-shadow: var(--shadow); padding: 32px 28px; text-align: center;
 }
 .login-mark { font-size: 38px; line-height: 1; margin-bottom: 12px; }
+.login-logo { height: 42px; width: auto; margin: 0 auto 16px; display: block; }
 .login-title { margin: 0 0 4px; font-size: 21px; font-weight: 800; }
 .login-sub { margin: 0 0 20px; font-size: 13.5px; color: var(--muted); }
 .login-input {

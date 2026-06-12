@@ -5,6 +5,7 @@ import SummaryBar from "./components/SummaryBar";
 import ControlPanel from "./components/ControlPanel";
 import InfoPanel from "./components/InfoPanel";
 import LoginModal from "./components/LoginModal";
+import YnetLogo from "./components/YnetLogo";
 import { fmt, pct } from "./format";
 
 // Lazy-loaded tab views: MapLibre (in MapView) and d3 (Sankey/Demographics) split
@@ -83,8 +84,11 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="brand">
-          <h1>מפת הבחירות לכנסת ה-25</h1>
-          <p className="subtitle">תוצאות לפי יישוב · נתונים פתוחים מוועדת הבחירות המרכזית והלשכה המרכזית לסטטיסטיקה</p>
+          <YnetLogo className="brand-logo" />
+          <div className="brand-text">
+            <h1>מפת הבחירות לכנסת ה-25</h1>
+            <p className="subtitle">תוצאות לפי יישוב · נתונים פתוחים מוועדת הבחירות המרכזית והלשכה המרכזית לסטטיסטיקה</p>
+          </div>
         </div>
         <div className="header-right">
           <nav className="tabs" role="tablist">

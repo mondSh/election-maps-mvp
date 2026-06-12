@@ -1,4 +1,5 @@
 import { useState } from "react";
+import YnetLogo from "./YnetLogo";
 
 /** Full-screen access-code gate. On a correct code the Worker sets a 30-day cookie. */
 export default function LoginModal({ onSuccess }: { onSuccess: () => void }) {
@@ -27,7 +28,7 @@ export default function LoginModal({ onSuccess }: { onSuccess: () => void }) {
   return (
     <div className="login-overlay">
       <form className="login-card" onSubmit={submit}>
-        <div className="login-mark">🗳️</div>
+        <YnetLogo className="login-logo" />
         <h1 className="login-title">מפות הבחירות לכנסת</h1>
         <p className="login-sub">הדגמה מוגנת · הזינו קוד גישה כדי להמשיך</p>
         <input

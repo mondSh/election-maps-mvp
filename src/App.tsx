@@ -69,7 +69,8 @@ export default function App() {
   if (!data) return <div className="loading"><div className="spinner" />טוען נתונים…</div>;
 
   const k25 = data.resultsMeta.knessets["25"];
-  const selectedSettlement = selected ? data.settlements[selected] : null;
+  const activeSettlements = year === 25 ? data.settlements : data.settlements24;
+  const selectedSettlement = selected ? activeSettlements[selected] : null;
   const drillSemel = data.cityDrill ? String(data.cityDrill.semel) : null;
 
   return (
@@ -106,7 +107,7 @@ export default function App() {
         <main className="stage">
           <MapView
             parties={data.parties}
-            settlements={data.settlements}
+            settlements={activeSettlements}
             points={data.points}
             colorMode={colorMode}
             selected={selected}
@@ -133,8 +134,9 @@ export default function App() {
             <InfoPanel
               settlement={selectedSettlement}
               parties={data.parties}
+              year={year}
               onClose={() => setSelected(null)}
-              drillAvailable={selected === drillSemel}
+              drillAvailable={selected === drillSemel && year === 25}
               onDrill={() => { setDrillCity(selected); setSelected(null); }}
             />
           )}

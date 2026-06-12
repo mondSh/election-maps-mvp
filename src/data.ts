@@ -35,6 +35,7 @@ export type FeatureCollection = GeoJSONFC;
 export interface AppData {
   parties: Parties;
   settlements: Settlements;
+  settlements24: Settlements;
   points: PointLookup;
   resultsMeta: ResultsMeta;
   geoMeta: GeoMeta;
@@ -52,9 +53,10 @@ export interface AppData {
 
 /** Load everything the app needs up front (all files are small + static). */
 export async function loadAppData(): Promise<AppData> {
-  const [parties, settlements, points, resultsMeta, geoMeta, sankey, settlementsGeo, pointsGeo] = await Promise.all([
+  const [parties, settlements, settlements24, points, resultsMeta, geoMeta, sankey, settlementsGeo, pointsGeo] = await Promise.all([
     getJson<Parties>("parties.json"),
     getJson<Settlements>("k25-settlements.json"),
+    getJson<Settlements>("k24-settlements.json"),
     getJson<PointLookup>("settlement-points.json"),
     getJson<ResultsMeta>("results-meta.json"),
     getJson<GeoMeta>("geo-meta.json"),
@@ -68,7 +70,7 @@ export async function loadAppData(): Promise<AppData> {
     getJson<SocioData>("socio-25.json"),
   ]);
   const cityDrill = await getJson<CityDrillMeta>("telaviv-sa-meta.json").catch(() => null);
-  return { parties, settlements, points, resultsMeta, geoMeta, sankey, settlementsGeo, pointsGeo, allPointsGeo, seats, socio, cityDrill };
+  return { parties, settlements, settlements24, points, resultsMeta, geoMeta, sankey, settlementsGeo, pointsGeo, allPointsGeo, seats, socio, cityDrill };
 }
 
 /** Fetch the city drill-down GeoJSON on demand (also through the auth cookie). */

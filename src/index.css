@@ -103,7 +103,9 @@ body { font-family: var(--font); color: var(--ink); background: var(--bg); -webk
 .info-panel { top: 12px; left: 12px; width: 340px; max-height: calc(100% - 24px); padding: 16px; display: flex; flex-direction: column; }
 .close-btn { position: absolute; top: 8px; left: 10px; border: 0; background: transparent; font-size: 22px; line-height: 1; color: var(--muted); cursor: pointer; }
 .close-btn:hover { color: var(--ink); }
-.info-name { margin: 0 0 10px; font-size: 18px; font-weight: 800; }
+.info-titlerow { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 10px; }
+.info-name { margin: 0; font-size: 18px; font-weight: 800; }
+.info-year { font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 3px 8px; border-radius: 12px; white-space: nowrap; flex: none; }
 .info-stats { display: flex; gap: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
 .info-stats > div { display: flex; flex-direction: column; }
 .stat-num { font-size: 16px; font-weight: 800; }

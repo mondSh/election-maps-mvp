@@ -4,12 +4,13 @@ import { fmt, pct } from "../format";
 interface Props {
   settlement: Settlement;
   parties: Parties;
+  year: 24 | 25;
   onClose: () => void;
   drillAvailable?: boolean;
   onDrill?: () => void;
 }
 
-export default function InfoPanel({ settlement: s, parties, onClose, drillAvailable, onDrill }: Props) {
+export default function InfoPanel({ settlement: s, parties, year, onClose, drillAvailable, onDrill }: Props) {
   const rows = Object.entries(s.parties)
     .map(([family, votes]) => ({ family, votes, label: parties[family]?.label ?? family, color: parties[family]?.color ?? "#c9ccd1" }))
     .sort((a, b) => b.votes - a.votes);
@@ -18,7 +19,10 @@ export default function InfoPanel({ settlement: s, parties, onClose, drillAvaila
   return (
     <div className="panel info-panel">
       <button className="close-btn" onClick={onClose} aria-label="סגור">×</button>
-      <h3 className="info-name">{s.name.trim()}</h3>
+      <div className="info-titlerow">
+        <h3 className="info-name">{s.name.trim()}</h3>
+        <span className="info-year">כנסת {year} · {year === 25 ? "2022" : "2021"}</span>
+      </div>
       <div className="info-stats">
         <div><span className="stat-num">{fmt(s.valid)}</span><span className="stat-cap">קולות כשרים</span></div>
         <div><span className="stat-num">{pct(s.turnout)}</span><span className="stat-cap">אחוז הצבעה</span></div>

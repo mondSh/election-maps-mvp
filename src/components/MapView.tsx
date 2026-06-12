@@ -98,6 +98,8 @@ export default function MapView({ parties, settlements, points, colorMode, selec
   yearRef.current = year;
   const mapViewRef = useRef(mapView);
   mapViewRef.current = mapView;
+  const settlementsRef = useRef(settlements);
+  settlementsRef.current = settlements;
   const [ready, setReady] = useState(false);
 
   // ---- init map once ----
@@ -193,13 +195,17 @@ export default function MapView({ parties, settlements, points, colorMode, selec
         hoveredRef.current = semel;
         map.setFeatureState({ source: "settlements", id: semel }, { hover: true });
       }
-      const s = settlements[semel];
+      const s = settlementsRef.current[semel];
+      const name = s?.name ?? settlements[semel]?.name ?? "";
+      const yr = yearRef.current === 25 ? "2022" : "2021";
       if (s) {
         const winnerLabel = s.winner ? parties[s.winner]?.label ?? "" : "ללא נתונים";
         popupRef.current
           ?.setLngLat(e.lngLat)
-          .setHTML(`<strong>${s.name}</strong><br/>${winnerLabel}${s.winner ? ` · ${pct(s.winnerShare)}` : ""}<br/><span class="muted">${fmt(s.valid)} קולות · השתתפות ${pct(s.turnout)}</span>`)
+          .setHTML(`<strong>${name}</strong> <span class="muted">· ${yr}</span><br/>${winnerLabel}${s.winner ? ` · ${pct(s.winnerShare)}` : ""}<br/><span class="muted">${fmt(s.valid)} קולות · השתתפות ${pct(s.turnout)}</span>`)
           .addTo(map);
+      } else {
+        popupRef.current?.setLngLat(e.lngLat).setHTML(`<strong>${name}</strong> <span class="muted">· ${yr}</span><br/><span class="muted">אין נתונים</span>`).addTo(map);
       }
     }
     function clearHover() {

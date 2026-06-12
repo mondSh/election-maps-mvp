@@ -24,14 +24,18 @@ interface Props {
   onSelect: (semel: string | null) => void;
   settlementsGeo: FeatureCollection;
   pointsGeo: FeatureCollection;
+  allPointsGeo: FeatureCollection;
   /** When set, swap to the neighborhood (statistical-area) drill-down for that GeoJSON. */
   drillData: FeatureCollection | null;
   theme: Theme;
   /** Election year for winner/share coloring: 25 = 2022, 24 = 2021. */
   year: 24 | 25;
+  /** "choropleth" = filled polygons; "bubbles" = vote-sized proportional symbols. */
+  mapView: MapViewMode;
 }
 
-const NATIONAL_LAYERS = ["settle-fill", "settle-line", "settle-selected", "bubbles"];
+export type MapViewMode = "choropleth" | "bubbles";
+
 const TLV_BOUNDS: [[number, number], [number, number]] = [[34.736, 32.01], [34.862, 32.13]];
 const ISRAEL_BOUNDS: [[number, number], [number, number]] = [[34.2, 29.45], [35.95, 33.4]];
 
@@ -79,7 +83,9 @@ function baseStyle(pal: Pal): StyleSpecification {
   };
 }
 
-export default function MapView({ parties, settlements, points, colorMode, selected, onSelect, settlementsGeo, pointsGeo, drillData, theme, year }: Props) {
+const CHOROPLETH_LAYERS = ["settle-fill", "settle-line", "settle-selected", "bubbles"];
+
+export default function MapView({ parties, settlements, points, colorMode, selected, onSelect, settlementsGeo, pointsGeo, allPointsGeo, drillData, theme, year, mapView }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const hoveredRef = useRef<string | null>(null);
@@ -90,6 +96,8 @@ export default function MapView({ parties, settlements, points, colorMode, selec
   themeRef.current = theme;
   const yearRef = useRef(year);
   yearRef.current = year;
+  const mapViewRef = useRef(mapView);
+  mapViewRef.current = mapView;
   const [ready, setReady] = useState(false);
 
   // ---- init map once ----
@@ -145,10 +153,23 @@ export default function MapView({ parties, settlements, points, colorMode, selec
         },
       });
 
+      // Proportional-symbol "cartogram" view: every settlement a vote-sized circle.
+      map.addSource("allpoints", { type: "geojson", data: allPointsGeo, promoteId: "semel" });
+      map.addLayer({
+        id: "cartogram", type: "circle", source: "allpoints",
+        layout: { visibility: mapViewRef.current === "bubbles" ? "visible" : "none" },
+        paint: {
+          "circle-color": fillExpression(colorMode, parties, pal, yearRef.current),
+          "circle-radius": ["interpolate", ["linear"], ["sqrt", ["coalesce", ["get", "valid"], 0]], 0, 1.5, 80, 5, 520, 26],
+          "circle-stroke-color": pal.sea, "circle-stroke-width": 0.6, "circle-opacity": 0.9,
+        },
+      });
+      if (mapViewRef.current === "bubbles") for (const l of CHOROPLETH_LAYERS) map.setLayoutProperty(l, "visibility", "none");
+
       map.fitBounds([[34.2, 29.45], [35.95, 33.4]], { padding: 24, animate: false });
       addCityLabels(map, settlements, points);
 
-      for (const layer of ["settle-fill", "bubbles"]) {
+      for (const layer of ["settle-fill", "bubbles", "cartogram"]) {
         map.on("mousemove", layer, (e) => onHover(e, layer));
         map.on("mouseleave", layer, () => clearHover());
         map.on("click", layer, (e) => {
@@ -202,17 +223,17 @@ export default function MapView({ parties, settlements, points, colorMode, selec
     if (map.getLayer("settle-fill")) map.setPaintProperty("settle-fill", "fill-color", expr);
     if (map.getLayer("city-fill")) map.setPaintProperty("city-fill", "fill-color", expr);
     if (map.getLayer("bubbles")) map.setPaintProperty("bubbles", "circle-color", winnerCircleColor(parties, pal));
+    if (map.getLayer("cartogram")) {
+      map.setPaintProperty("cartogram", "circle-color", expr);
+      map.setPaintProperty("cartogram", "circle-stroke-color", pal.sea);
+    }
     if (map.getLayer("settle-selected")) map.setPaintProperty("settle-selected", "line-color", pal.selected);
   }, [colorMode, theme, parties, ready, year]);
 
-  // ---- city drill-down: swap to statistical-area resolution ----
+  // ---- city drill-down: create the SA source + frame the city ----
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !map.getLayer("settle-fill")) return; // wait until base layers exist
-
-    const setVis = (ids: string[], v: "visible" | "none") => {
-      for (const id of ids) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", v);
-    };
 
     if (drillData) {
       if (!map.getSource("city")) {
@@ -239,17 +260,26 @@ export default function MapView({ parties, settlements, points, colorMode, selec
         map.on("mouseleave", "city-fill", () => { map.getCanvas().style.cursor = ""; popupRef.current?.remove(); });
       } else {
         (map.getSource("city") as GeoJSONSource).setData(drillData);
-        setVis(["city-fill", "city-line"], "visible");
       }
-      setVis(NATIONAL_LAYERS, "none");
       map.fitBounds(TLV_BOUNDS, { padding: 30, animate: true });
     } else {
-      setVis(["city-fill", "city-line"], "none");
-      setVis(NATIONAL_LAYERS, "visible");
       map.fitBounds(ISRAEL_BOUNDS, { padding: 24, animate: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drillData, ready]);
+
+  // ---- single source of truth for base-layer visibility ----
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !map.getLayer("settle-fill")) return;
+    const setVis = (ids: string[], v: "visible" | "none") => {
+      for (const id of ids) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", v);
+    };
+    const drilled = !!drillData;
+    setVis(["city-fill", "city-line"], drilled ? "visible" : "none");
+    setVis(CHOROPLETH_LAYERS, !drilled && mapView === "choropleth" ? "visible" : "none");
+    setVis(["cartogram"], !drilled && mapView === "bubbles" ? "visible" : "none");
+  }, [drillData, mapView, ready]);
 
   // ---- selected highlight + fly ----
   useEffect(() => {

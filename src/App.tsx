@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { loadAppData, loadCityDrill, AuthRequiredError, type AppData, type FeatureCollection } from "./data";
 import type { ColorMode } from "./types";
-import MapView, { type Theme } from "./components/MapView";
+import MapView, { type Theme, type MapViewMode } from "./components/MapView";
 import SummaryBar from "./components/SummaryBar";
 import ControlPanel from "./components/ControlPanel";
 import InfoPanel from "./components/InfoPanel";
@@ -19,6 +19,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("map");
   const [colorMode, setColorMode] = useState<ColorMode>({ kind: "winner" });
   const [year, setYear] = useState<24 | 25>(25);
+  const [mapViewMode, setMapViewMode] = useState<MapViewMode>("choropleth");
   const [selected, setSelected] = useState<string | null>(null);
   const [showMethod, setShowMethod] = useState(false);
   const [drillCity, setDrillCity] = useState<string | null>(null);
@@ -112,11 +113,13 @@ export default function App() {
             onSelect={setSelected}
             settlementsGeo={data.settlementsGeo}
             pointsGeo={data.pointsGeo}
+            allPointsGeo={data.allPointsGeo}
             drillData={drillCity ? drillData : null}
             theme={theme}
             year={year}
+            mapView={mapViewMode}
           />
-          <ControlPanel parties={data.parties} national={k25.national} colorMode={colorMode} onChange={setColorMode} year={year} onYear={setYear} />
+          <ControlPanel parties={data.parties} national={k25.national} colorMode={colorMode} onChange={setColorMode} year={year} onYear={setYear} mapView={mapViewMode} onMapView={setMapViewMode} />
           {drillCity && data.cityDrill && (
             <div className="drill-banner">
               <div>

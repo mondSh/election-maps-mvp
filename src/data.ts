@@ -43,6 +43,7 @@ export interface AppData {
   // MapLibre as parsed objects — its worker can't carry the cookie past the gate.
   settlementsGeo: FeatureCollection;
   pointsGeo: FeatureCollection;
+  allPointsGeo: FeatureCollection;
   seats: SeatsData;
   socio: SocioData;
   /** Optional Tel Aviv neighborhood drill-down (present only if the demo data was built). */
@@ -61,12 +62,13 @@ export async function loadAppData(): Promise<AppData> {
     getJson<FeatureCollection>("k25-settlements.geojson"),
     getJson<FeatureCollection>("k25-settlements-points.geojson"),
   ]);
+  const allPointsGeo = await getJson<FeatureCollection>("k25-all-points.geojson");
   const [seats, socio] = await Promise.all([
     getJson<SeatsData>("seats-25.json"),
     getJson<SocioData>("socio-25.json"),
   ]);
   const cityDrill = await getJson<CityDrillMeta>("telaviv-sa-meta.json").catch(() => null);
-  return { parties, settlements, points, resultsMeta, geoMeta, sankey, settlementsGeo, pointsGeo, seats, socio, cityDrill };
+  return { parties, settlements, points, resultsMeta, geoMeta, sankey, settlementsGeo, pointsGeo, allPointsGeo, seats, socio, cityDrill };
 }
 
 /** Fetch the city drill-down GeoJSON on demand (also through the auth cookie). */

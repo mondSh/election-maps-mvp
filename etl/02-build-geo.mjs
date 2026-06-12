@@ -73,27 +73,28 @@ async function main() {
   let mappedValid = 0;
   const mappedSemels = new Set();
 
-  for (const f of fc.features) {
-    const semel = Number(f.properties.SEMEL_YISH);
-    const r = results[String(semel)];
-    const r24 = results24[String(semel)];
-    const props = { semel, name: r?.name ?? "", winner: r?.winner ?? null };
-    if (r) {
-      mappedValid += r.valid;
-      mappedSemels.add(String(semel));
-      props.winnerShare = r.winnerShare;
-      props.turnout = r.turnout;
-      props.valid = r.valid;
-      for (const fam of FAMILY_KEYS) {
-        const v = r.parties[fam];
-        if (v) props[`sh_${fam}`] = +(v / r.valid).toFixed(4);
-        // K24 share of the same family → enables the 24→25 swing map.
-        const v24 = r24?.parties?.[fam];
-        if (r24 && v24 && r24.valid > 0) props[`sh24_${fam}`] = +(v24 / r24.valid).toFixed(4);
-      }
-      if (r24) props.winner24 = r24.winner;
+  // Build a settlement's display properties (winner + per-party 2022/2021 shares).
+  const buildProps = (semel, r, r24) => {
+    const props = { semel: +semel, name: r?.name ?? "", winner: r?.winner ?? null };
+    if (!r) return props;
+    props.winnerShare = r.winnerShare;
+    props.turnout = r.turnout;
+    props.valid = r.valid;
+    for (const fam of FAMILY_KEYS) {
+      const v = r.parties[fam];
+      if (v) props[`sh_${fam}`] = +(v / r.valid).toFixed(4);
+      const v24 = r24?.parties?.[fam];
+      if (r24 && v24 && r24.valid > 0) props[`sh24_${fam}`] = +(v24 / r24.valid).toFixed(4);
     }
-    f.properties = props;
+    if (r24) props.winner24 = r24.winner;
+    return props;
+  };
+
+  for (const f of fc.features) {
+    const semel = String(Number(f.properties.SEMEL_YISH));
+    const r = results[semel];
+    if (r) { mappedValid += r.valid; mappedSemels.add(semel); }
+    f.properties = buildProps(semel, r, results24[semel]);
   }
   writeFileSync(join(OUT, "k25-settlements.geojson"), JSON.stringify(fc));
 
@@ -116,6 +117,18 @@ async function main() {
     });
   }
   writeFileSync(join(OUT, "k25-settlements-points.geojson"), JSON.stringify({ type: "FeatureCollection", features: pointFeatures }));
+
+  // ALL settlements as points (vote-sized) → the proportional-symbol "cartogram"
+  // view that removes the area-bias of the choropleth. Full props so it works in
+  // every color mode (winner / party share / swing).
+  const allPoints = [];
+  for (const [semel, r] of Object.entries(results)) {
+    const coord = pointByCode.get(semel);
+    if (!coord) continue;
+    allPoints.push({ type: "Feature", geometry: { type: "Point", coordinates: coord }, properties: buildProps(semel, r, results24[semel]) });
+  }
+  writeFileSync(join(OUT, "k25-all-points.geojson"), JSON.stringify({ type: "FeatureCollection", features: allPoints }));
+  console.log(`  wrote k25-all-points.geojson (${allPoints.length} settlement bubbles)`);
 
   // Full semel → [lon,lat] lookup (official CBS settlement points) for label anchors.
   const centroidLookup = {};

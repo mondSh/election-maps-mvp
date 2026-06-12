@@ -1,4 +1,5 @@
 import type { ColorMode, NationalEntry, Parties } from "../types";
+import type { MapViewMode } from "./MapView";
 
 interface Props {
   parties: Parties;
@@ -7,15 +8,21 @@ interface Props {
   onChange: (mode: ColorMode) => void;
   year: 24 | 25;
   onYear: (y: 24 | 25) => void;
+  mapView: MapViewMode;
+  onMapView: (v: MapViewMode) => void;
 }
 
-/** Color-mode picker (winner / a party's share / its 2021→2022 swing) + year + legend. */
-export default function ControlPanel({ parties, national, colorMode, onChange, year, onYear }: Props) {
+/** View + color-mode picker (winner / share / swing) + year + legend. */
+export default function ControlPanel({ parties, national, colorMode, onChange, year, onYear, mapView, onMapView }: Props) {
   const selectableParties = national.filter((e) => e.family !== "other");
   const family = colorMode.kind === "winner" ? null : colorMode.family;
 
   return (
     <div className="panel control-panel">
+      <div className="year-toggle">
+        <button className={mapView === "choropleth" ? "year-btn on" : "year-btn"} onClick={() => onMapView("choropleth")}>מפה מלאה</button>
+        <button className={mapView === "bubbles" ? "year-btn on" : "year-btn"} onClick={() => onMapView("bubbles")}>בועות (לפי קולות)</button>
+      </div>
       {colorMode.kind !== "swing" && (
         <div className="year-toggle">
           <button className={year === 25 ? "year-btn on" : "year-btn"} onClick={() => onYear(25)}>2022 · כנסת 25</button>

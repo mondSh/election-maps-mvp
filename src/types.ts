@@ -81,6 +81,8 @@ export interface SocioCluster {
   localities: number;
   valid: number;
   turnout: number;
+  /** Up to 5 recognizable example towns (largest by valid votes) so a reader can self-locate. */
+  examples: string[];
   shares: Record<FamilyKey, number>;
 }
 export interface SocioData {

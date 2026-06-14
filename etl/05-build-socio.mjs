@@ -42,7 +42,7 @@ async function main() {
   const results = JSON.parse(readFileSync(join(OUT, "k25-settlements.json")));
 
   // Aggregate votes into clusters 1..10.
-  const agg = Array.from({ length: 11 }, () => ({ valid: 0, voters: 0, eligible: 0, localities: 0, parties: {} }));
+  const agg = Array.from({ length: 11 }, () => ({ valid: 0, voters: 0, eligible: 0, localities: 0, parties: {}, towns: [] }));
   let matched = 0;
   for (const [semel, r] of Object.entries(results)) {
     const c = clusterByCode.get(semel);
@@ -50,6 +50,7 @@ async function main() {
     matched++;
     const a = agg[c];
     a.valid += r.valid; a.voters += r.voters; a.eligible += r.eligible; a.localities++;
+    a.towns.push({ name: r.name, valid: r.valid });
     for (const [fam, v] of Object.entries(r.parties)) a.parties[fam] = (a.parties[fam] || 0) + v;
   }
 
@@ -61,11 +62,16 @@ async function main() {
     for (const fam of Object.keys(FAMILIES)) {
       if (a.parties[fam]) shares[fam] = +(a.parties[fam] / a.valid).toFixed(4);
     }
+    // Up to 5 recognizable example towns — the largest by valid votes, so a reader
+    // can locate their own town's cluster ("my city is here → this is my cluster").
+    // (collapse the few double-space CEC source names, e.g. "תל אביב  יפו").
+    const examples = a.towns.sort((x, y) => y.valid - x.valid).slice(0, 5).map((t) => t.name.trim().replace(/\s+/g, " "));
     clusters.push({
       cluster: c,
       localities: a.localities,
       valid: a.valid,
       turnout: a.eligible > 0 ? +(a.voters / a.eligible).toFixed(4) : 0,
+      examples,
       shares,
     });
   }

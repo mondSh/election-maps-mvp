@@ -236,18 +236,29 @@ body { font-family: var(--font); color: var(--ink); background: var(--bg); -webk
 .demo-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--panel); border-radius: 18px; padding: 5px 12px; font-family: inherit; font-size: 12.5px; color: var(--ink); cursor: pointer; transition: all .12s; }
 .demo-chip.on { border-color: var(--muted); font-weight: 700; }
 .demo-dot { width: 11px; height: 11px; border-radius: 50%; }
-.demo-turnout { margin-top: 18px; display: flex; align-items: flex-end; gap: 14px; }
-.demo-turnout-title { font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; padding-bottom: 18px; }
-.turnout-bars { flex: 1; display: flex; flex-direction: row-reverse; align-items: flex-end; gap: 6px; height: 70px; }
-.turnout-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
-.turnout-bar { width: 100%; max-width: 30px; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 3px; }
-.turnout-cluster { font-size: 11px; color: var(--muted); margin-top: 4px; }
-.demo-note { margin-top: 14px; font-size: 11.5px; }
+.demo-turnout { margin-top: 18px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.demo-turnout-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.demo-turnout-title { font-size: 13px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.demo-turnout-hint { font-size: 11.5px; color: var(--muted); }
+/* `row` under the RTL page = cluster 1 on the right, matching the chart's x-axis. */
+.turnout-bars { display: flex; flex-direction: row; align-items: flex-end; gap: 6px; height: 78px; }
+/* each column is a button now — strip native button chrome */
+.turnout-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; background: none; border: 0; padding: 0; font-family: inherit; cursor: pointer; border-radius: 4px; transition: background .12s; }
+.turnout-col:hover, .turnout-col:focus-visible { background: var(--accent-soft); outline: none; }
+.turnout-val { font-size: 10.5px; font-weight: 700; color: var(--muted); margin-bottom: 3px; opacity: 0; transition: opacity .12s; }
+.turnout-col:hover .turnout-val, .turnout-col:focus-visible .turnout-val, .turnout-col.on .turnout-val { opacity: 1; }
+.turnout-bar { width: 100%; max-width: 30px; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 3px; opacity: .72; transition: opacity .12s; }
+.turnout-col:hover .turnout-bar, .turnout-col.on .turnout-bar { opacity: 1; }
+.turnout-cluster { font-size: 11px; font-weight: 600; color: var(--muted); margin-top: 4px; }
+.turnout-col.on .turnout-cluster { color: var(--accent); }
+.cluster-detail { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line); font-size: 12.5px; line-height: 1.5; min-height: 38px; display: flex; flex-direction: column; gap: 1px; }
+.cluster-detail-head { color: var(--ink); }
+.cluster-examples { color: var(--ink); }
+.demo-note { margin-top: 14px; font-size: 11.5px; line-height: 1.6; }
 
 @media (max-width: 760px) {
   .demo-head h2 { font-size: 18px; }
-  .demo-turnout { flex-direction: column; align-items: stretch; gap: 8px; }
-  .demo-turnout-title { padding-bottom: 0; }
+  .demo-turnout-hint { display: none; }
 }
 
 /* ---------- footer ---------- */

@@ -9,6 +9,9 @@ const M = { top: 22, right: 26, bottom: 52, left: 48 };
 
 export default function DemographicsView({ socio }: { socio: SocioData }) {
   const [hover, setHover] = useState<FamilyKey | null>(null);
+  // Which cluster the reader is inspecting (to surface example towns → "this is my cluster").
+  const [selCluster, setSelCluster] = useState<number | null>(null);
+  const sel = selCluster ? socio.clusters.find((c) => c.cluster === selCluster) ?? null : null;
 
   const { x, y, yTicks, lineGen } = useMemo(() => {
     const allShares = socio.series.flatMap((s) => s.points.map((p) => p.share));
@@ -34,7 +37,8 @@ export default function DemographicsView({ socio }: { socio: SocioData }) {
       <div className="demo-head">
         <h2>איך הצביעה ישראל לפי מצב חברתי-כלכלי</h2>
         <p className="demo-sub">
-          אחוז הקולות לכל מפלגה לפי <b>האשכול החברתי-כלכלי</b> של היישוב (הלמ"ס, 1 = החלש ביותר … 10 = החזק ביותר).
+          אחוז הקולות לכל מפלגה לפי <b>האשכול החברתי-כלכלי</b> של היישוב — דירוג הלמ"ס מ-<b>1 (חלש)</b> עד <b>10 (חזק)</b>,
+          לפי הכנסה, השכלה, תעסוקה ורמת חיים. כדי לזהות לאיזה אשכול היישוב שלכם שייך, בחרו אשכול בתרשים ההצבעה למטה וראו יישובים לדוגמה.
         </p>
         <p className="disclaimer">
           ⚠️ <b>ניתוח מצרפי.</b> זהו ממוצע לפי יישובים, לא הצבעת הפרט — <b>כשל אקולוגי</b>: דפוס של קבוצת יישובים אינו מעיד בהכרח על אדם יחיד.
@@ -97,18 +101,48 @@ export default function DemographicsView({ socio }: { socio: SocioData }) {
       </div>
 
       <div className="demo-turnout">
-        <span className="demo-turnout-title">אחוז הצבעה לפי אשכול:</span>
+        <div className="demo-turnout-head">
+          <span className="demo-turnout-title">אחוז הצבעה לפי אשכול</span>
+          <span className="demo-turnout-hint">בחרו אשכול כדי לראות יישובים לדוגמה ←</span>
+        </div>
         <div className="turnout-bars">
           {socio.clusters.map((c) => (
-            <div key={c.cluster} className="turnout-col" title={`אשכול ${c.cluster}: ${pct(c.turnout)} · ${c.localities} יישובים · ${fmt(c.valid)} קולות`}>
-              <div className="turnout-bar" style={{ height: `${turnoutH(c.turnout)}%` }} />
+            <button
+              key={c.cluster}
+              type="button"
+              className={selCluster === c.cluster ? "turnout-col on" : "turnout-col"}
+              aria-label={`אשכול ${c.cluster}: אחוז הצבעה ${pct(c.turnout)}, ${c.localities} יישובים`}
+              aria-pressed={selCluster === c.cluster}
+              onMouseEnter={() => setSelCluster(c.cluster)}
+              onFocus={() => setSelCluster(c.cluster)}
+              onClick={() => setSelCluster((prev) => (prev === c.cluster ? null : c.cluster))}
+            >
+              <span className="turnout-val">{Math.round(c.turnout * 100)}</span>
+              <span className="turnout-bar" style={{ height: `${turnoutH(c.turnout)}%` }} />
               <span className="turnout-cluster">{c.cluster}</span>
-            </div>
+            </button>
           ))}
+        </div>
+        <div className="cluster-detail" aria-live="polite">
+          {sel ? (
+            <>
+              <span className="cluster-detail-head">
+                אשכול <b>{sel.cluster}</b> · אחוז הצבעה <b>{pct(sel.turnout)}</b> · {sel.localities} יישובים · {fmt(sel.valid)} קולות
+              </span>
+              <span className="cluster-examples">
+                <span className="muted">יישובים לדוגמה:</span> {sel.examples.join(" · ")}
+              </span>
+            </>
+          ) : (
+            <span className="muted">רחפו או הקישו על עמודה כדי לראות יישובים אופייניים — ולזהות לאיזה אשכול היישוב שלכם שייך.</span>
+          )}
         </div>
       </div>
 
-      <p className="muted demo-note">מקור: הלשכה המרכזית לסטטיסטיקה — מדד חברתי-כלכלי 2021 לפי יישוב · {socio.matchedLocalities} יישובים שותפו לתוצאות. אחוז ההצבעה הוא ממוצע משוקלל-קולות בכל אשכול.</p>
+      <p className="muted demo-note">
+        מקור: הלשכה המרכזית לסטטיסטיקה — מדד חברתי-כלכלי 2021 לפי יישוב · {socio.matchedLocalities} יישובים שותפו לתוצאות. אחוז ההצבעה הוא ממוצע משוקלל-קולות בכל אשכול.
+        <br />שימו לב: יישובים חרדיים וערביים נמצאים נמוך במדד בעיקר בשל הכנסה ותעסוקה — לא לפי כל מאפיין אחר.
+      </p>
     </div>
   );
 }

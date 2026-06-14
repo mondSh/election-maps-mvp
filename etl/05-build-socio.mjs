@@ -9,6 +9,7 @@ import { writeFileSync, readFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { FAMILIES } from "./party-map.mjs";
+import { cleanName } from "./lib/clean-name.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = join(__dirname, "..", "public", "data");
@@ -64,8 +65,7 @@ async function main() {
     }
     // Up to 5 recognizable example towns — the largest by valid votes, so a reader
     // can locate their own town's cluster ("my city is here → this is my cluster").
-    // (collapse the few double-space CEC source names, e.g. "תל אביב  יפו").
-    const examples = a.towns.sort((x, y) => y.valid - x.valid).slice(0, 5).map((t) => t.name.trim().replace(/\s+/g, " "));
+    const examples = a.towns.sort((x, y) => y.valid - x.valid).slice(0, 5).map((t) => cleanName(t.name));
     clusters.push({
       cluster: c,
       localities: a.localities,

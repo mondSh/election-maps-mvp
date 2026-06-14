@@ -7,6 +7,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { fetchAll } from "./lib/ckan.mjs";
+import { cleanName } from "./lib/clean-name.mjs";
 import { LETTERS_BY_KNESSET, FAMILIES, META_COLS } from "./party-map.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,7 +59,7 @@ function buildYear(knesset, rows) {
     }
 
     settlements[semel] = {
-      name: String(row["שם ישוב"] ?? "").trim(),
+      name: cleanName(row["שם ישוב"]),
       eligible,
       voters,
       valid,

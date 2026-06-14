@@ -96,6 +96,7 @@ export default function MapView({ parties, settlements, points, colorMode, selec
   mapViewRef.current = mapView;
   const settlementsRef = useRef(settlements);
   settlementsRef.current = settlements;
+  const labelsRef = useRef<LabelManager | null>(null);
   const [ready, setReady] = useState(false);
 
   // ---- init map once ----
@@ -165,7 +166,7 @@ export default function MapView({ parties, settlements, points, colorMode, selec
       if (mapViewRef.current === "bubbles") for (const l of CHOROPLETH_LAYERS) map.setLayoutProperty(l, "visibility", "none");
 
       map.fitBounds([[34.2, 29.45], [35.95, 33.4]], { padding: 24, animate: false });
-      addCityLabels(map, settlements, points);
+      labelsRef.current = createCityLabels(map, settlements, points);
 
       for (const layer of ["settle-fill", "bubbles", "cartogram"]) {
         map.on("mousemove", layer, (e) => onHover(e, layer));
@@ -211,7 +212,7 @@ export default function MapView({ parties, settlements, points, colorMode, selec
       popupRef.current?.remove();
     }
 
-    return () => { map.remove(); mapRef.current = null; };
+    return () => { labelsRef.current?.destroy(); map.remove(); mapRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -281,6 +282,7 @@ export default function MapView({ parties, settlements, points, colorMode, selec
     setVis(["city-fill", "city-line"], drilled ? "visible" : "none");
     setVis(CHOROPLETH_LAYERS, !drilled && mapView === "choropleth" ? "visible" : "none");
     setVis(["cartogram"], !drilled && mapView === "bubbles" ? "visible" : "none");
+    labelsRef.current?.setEnabled(!drilled); // national settlement labels off in the SA drill-down
   }, [drillData, mapView, ready]);
 
   // ---- selected highlight + fly ----
@@ -305,29 +307,110 @@ function winnerCircleColor(parties: Parties, pal: Pal): ExpressionSpecification 
   return ["match", ["get", "winner"], ...pairs, pal.noData] as unknown as ExpressionSpecification;
 }
 
-/** A handful of HTML markers for the biggest cities — no glyph server needed. */
-function addCityLabels(map: MlMap, settlements: Settlements, points: PointLookup) {
-  const top = Object.entries(settlements)
-    .filter(([semel]) => points[semel])
-    .sort((a, b) => b[1].valid - a[1].valid)
-    .slice(0, 18);
-  // Tiered labels: the 6 biggest cities always; the rest only when zoomed in,
-  // so the national view stays uncluttered in dense Gush Dan.
-  const markers: { marker: maplibregl.Marker; tier: number }[] = [];
-  top.forEach(([semel, s], i) => {
-    const el = document.createElement("div");
-    el.className = "city-label";
-    el.textContent = s.name.trim();
-    const marker = new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat(points[semel]).addTo(map);
-    markers.push({ marker, tier: i < 6 ? 0 : 1 });
-  });
-  const updateVisibility = () => {
-    const z = map.getZoom();
-    for (const { marker, tier } of markers) {
-      const show = tier === 0 || z >= 9.3;
-      marker.getElement().style.opacity = show ? "1" : "0";
+interface LabelManager {
+  /** Show/hide the whole label layer (hidden in the city drill-down). */
+  setEnabled(on: boolean): void;
+  /** Remove listeners + every live marker. */
+  destroy(): void;
+}
+
+/**
+ * Progressive settlement labels as HTML markers (no glyph server, stays self-contained).
+ *
+ * Real map engines hide overlapping text automatically; HTML markers don't, so we do the
+ * collision ourselves — greedily, biggest-town-first, in absolute Web-Mercator world-pixel
+ * space at the current zoom. World-pixel (not screen) coords make a label's eligibility
+ * depend on zoom alone, so the set is stable while you pan and simply grows as you zoom in.
+ * A marker pool keeps only the on-screen labels live in the DOM, so the candidate list can
+ * be the full ~1,200 settlements without 1,200 DOM nodes.
+ */
+function createCityLabels(map: MlMap, settlements: Settlements, points: PointLookup): LabelManager {
+  const LINE_H = 14; // px — .city-label line box
+  const PAD_X = 7; // px — half-gap each side (covers the ~4px text-shadow halo + breathing room)
+  const PAD_Y = 6;
+  const FONT = '700 12px "Moses","Heebo",system-ui,-apple-system,"Segoe UI",sans-serif';
+
+  // Candidate list, importance-sorted (votes desc), with normalized mercator coords [0,1].
+  const candidates = Object.entries(settlements)
+    .filter(([semel, s]) => points[semel] && s.name)
+    .map(([semel, s]) => {
+      const [lng, lat] = points[semel];
+      const m = maplibregl.MercatorCoordinate.fromLngLat({ lng, lat });
+      return { semel, name: s.name.trim(), valid: s.valid, mx: m.x, my: m.y };
+    })
+    .sort((a, b) => b.valid - a.valid);
+
+  // Text widths via canvas. measureText lies until the webfont resolves, so we measure once
+  // up front (fallback metrics) and again on document.fonts.ready.
+  const ctx = document.createElement("canvas").getContext("2d")!;
+  const widths = new Map<string, number>();
+  const measure = () => {
+    ctx.font = FONT;
+    for (const c of candidates) widths.set(c.semel, ctx.measureText(c.name).width);
+  };
+
+  let enabled = true;
+  let eligible = new Set<string>();
+  const pool = new Map<string, maplibregl.Marker>();
+
+  // Greedy collision in world pixels at the current zoom → the set that fits without overlap.
+  const computeEligible = () => {
+    const scale = 512 * Math.pow(2, map.getZoom());
+    const placed: { x: number; y: number; hw: number; hh: number }[] = [];
+    const next = new Set<string>();
+    for (const c of candidates) {
+      const x = c.mx * scale;
+      const y = c.my * scale;
+      const hw = (widths.get(c.semel) ?? c.name.length * 7) / 2 + PAD_X;
+      const hh = LINE_H / 2 + PAD_Y;
+      let ok = true;
+      for (const p of placed) {
+        if (Math.abs(x - p.x) < hw + p.hw && Math.abs(y - p.y) < hh + p.hh) { ok = false; break; }
+      }
+      if (ok) { placed.push({ x, y, hw, hh }); next.add(c.semel); }
+    }
+    eligible = next;
+  };
+
+  // Instantiate DOM only for eligible labels currently in view; tear down the rest.
+  const syncViewport = () => {
+    if (!enabled) return;
+    const b = map.getBounds();
+    for (const [semel, marker] of pool) {
+      if (!eligible.has(semel) || !b.contains(points[semel])) { marker.remove(); pool.delete(semel); }
+    }
+    for (const semel of eligible) {
+      if (pool.has(semel) || !b.contains(points[semel])) continue;
+      const el = document.createElement("div");
+      el.className = "city-label";
+      el.textContent = settlements[semel].name.trim();
+      pool.set(semel, new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat(points[semel]).addTo(map));
     }
   };
-  updateVisibility();
-  map.on("zoom", updateVisibility);
+
+  const refresh = () => { if (!enabled) return; computeEligible(); syncViewport(); };
+  const clearAll = () => { for (const [, m] of pool) m.remove(); pool.clear(); };
+
+  // Eligibility is zoom-based (recompute on zoomend); panning only re-instantiates (moveend).
+  const onZoom = () => refresh();
+  const onMove = () => syncViewport();
+  map.on("zoomend", onZoom);
+  map.on("moveend", onMove);
+
+  measure();
+  refresh();
+  document.fonts?.ready.then(() => { measure(); refresh(); });
+
+  return {
+    setEnabled(on: boolean) {
+      if (on === enabled) return;
+      enabled = on;
+      if (on) refresh(); else clearAll();
+    },
+    destroy() {
+      map.off("zoomend", onZoom);
+      map.off("moveend", onMove);
+      clearAll();
+    },
+  };
 }
